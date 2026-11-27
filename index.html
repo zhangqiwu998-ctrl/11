@@ -203,7 +203,7 @@ body.ui button, body.ui a { cursor: pointer; }
 #stage.grown .frame video {
   clip-path: inset(0% 0% 0% 0%);
   transform: scale(1);
-  transition: clip-path 2.15s cubic-bezier(0.22, 0.08, 0.16, 1), transform 2.15s cubic-bezier(0.22, 0.08, 0.16, 1);
+  transition: clip-path 1.5s cubic-bezier(0.22, 0.08, 0.16, 1), transform 1.5s cubic-bezier(0.22, 0.08, 0.16, 1);
 }
 .open-title {
   position: absolute;
@@ -233,10 +233,10 @@ body.ui button, body.ui a { cursor: pointer; }
 #stage.grown .open-clip span {
   transform: translate3d(0, 0, 0) rotate(0deg);
   filter: blur(0);
-  transition: transform 1.28s cubic-bezier(0.22, 0.08, 0.16, 1) 0.72s, filter 1.28s ease 0.72s;
+  transition: transform 1.02s cubic-bezier(0.22, 0.08, 0.16, 1) 0.38s, filter 1.02s ease 0.38s;
 }
 #stage.grown .open-clip:nth-child(2) span {
-  transition-delay: 0.96s, 0.96s;
+  transition-delay: 0.56s, 0.56s;
 }
 
 .side {
@@ -1613,8 +1613,8 @@ body.ui button, body.ui a { cursor: pointer; }
     </header>
 
     <div class="frame" id="frame">
-      <video id="vid-a" playsinline muted loop preload="auto"></video>
-      <video id="vid-b" playsinline muted loop preload="auto"></video>
+      <video id="vid-a" playsinline muted loop preload="none"></video>
+      <video id="vid-b" playsinline muted loop preload="none"></video>
       <div class="open-title" id="open-title">
         <div class="open-clip"><span id="open-a">FOG</span></div>
         <div class="open-clip"><span id="open-b">FIRE</span></div>
@@ -1655,7 +1655,7 @@ body.ui button, body.ui a { cursor: pointer; }
 
     <section class="hero-card">
       <div class="card">
-        <video id="hero-video" playsinline muted loop autoplay preload="auto"></video>
+        <video id="hero-video" playsinline muted loop autoplay preload="none"></video>
         <div class="hero-copy">
           <p class="hero-line" id="hero-a">YOUR</p>
           <p class="hero-line" id="hero-b">NAME</p>
@@ -1885,6 +1885,35 @@ function mediaUrl(elId, mime) {
   };
   return media[elId] || "";
 }
+
+// Load video files only when their visual section is close to the viewport.
+function loadVideo(video, shouldPlay) {
+  if (!video) return;
+  var src = video.dataset.src;
+  if (shouldPlay && src && video.getAttribute("src") !== src) {
+    video.src = src;
+    video.load();
+  }
+  if (shouldPlay) {
+    if (video.paused) video.play().catch(function () {});
+  } else if (!video.paused) {
+    video.pause();
+  }
+}
+function watchVideo(video) {
+  if (!video) return;
+  video.preload = "none";
+  if (!("IntersectionObserver" in window)) {
+    loadVideo(video, true);
+    return;
+  }
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      loadVideo(video, entry.isIntersecting);
+    });
+  }, { rootMargin: "260px 0px" });
+  observer.observe(video);
+}
 var posterMap = {};
 FILMS.forEach(function (film) {
   var oldPoster = film.poster;
@@ -1896,8 +1925,9 @@ PROFILE.poemStills = PROFILE.poemStills.map(function (still) { return posterMap[
 var hero = document.getElementById("hero-video");
 var last = FILMS[FILMS.length - 1];
 hero.poster = last.poster;
-hero.src = last.src;
-hero.play().catch(function () {});
+hero.dataset.src = last.src;
+hero.preload = "none";
+watchVideo(hero);
 
 
 const CASES = [FILMS[1], FILMS[2]];
@@ -1939,12 +1969,17 @@ function fmt(t) {
 }
 function bind(video, film) {
   if (video.dataset.id === film.id) return;
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
   video.dataset.id = film.id;
+  video.dataset.src = film.src;
   video.poster = film.poster;
-  video.src = film.src;
+  video.preload = "none";
   video.muted = !wantSound;
-  if (wantPlay) video.play().catch(() => {});
 }
+bind(vidA, FILMS[0]);
+loadVideo(vidA, wantPlay);
 
 function filmTravel() {
   return Math.max(1, portrait.offsetTop - window.innerHeight);
@@ -1994,13 +2029,13 @@ CASES.forEach((film) => {
     const finder = document.createElement("article");
     finder.className = "finder";
     finder.innerHTML =
-      '<video class="finder-film" muted loop playsinline preload="metadata"></video>' +
+      '<video class="finder-film" muted loop playsinline preload="none"></video>' +
       '<div class="finder-layout">' +
         '<p class="finder-word above"></p>' +
         '<div class="finder-gate">' +
           '<div class="finder-meta"><span class="vf-kicker"></span><span class="vf-note"></span></div>' +
           '<div class="vf">' +
-            '<div class="vf-clip"><video class="finder-zoom" muted loop playsinline preload="metadata"></video></div>' +
+            '<div class="vf-clip"><video class="finder-zoom" muted loop playsinline preload="none"></video></div>' +
             '<i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>' +
           '</div>' +
         '</div>' +
@@ -2008,7 +2043,8 @@ CASES.forEach((film) => {
       '</div>';
     finder.querySelectorAll("video").forEach((video) => {
       video.poster = mediaUrl("platep", "image/jpeg");
-      video.src = mediaUrl("platev", "video/mp4");
+      video.dataset.src = mediaUrl("platev", "video/mp4");
+      video.preload = "none";
     });
     finder.querySelector(".finder-word.above").textContent = film.left;
     finder.querySelector(".finder-word.below").textContent = film.right;
@@ -2022,12 +2058,12 @@ CASES.forEach((film) => {
   const media = document.createElement("div");
   media.className = "case-media";
   const video = document.createElement("video");
-  video.src = film.src;
+  video.dataset.src = film.src;
   video.poster = film.poster;
   video.muted = true;
   video.loop = true;
   video.playsInline = true;
-  video.preload = "metadata";
+  video.preload = "none";
   media.appendChild(video);
   const meta = document.createElement("div");
   meta.className = "case-meta";
@@ -2063,8 +2099,8 @@ const splitFilms = [
 ];
 split.innerHTML =
   '<div class="flat-bg" id="flat-bg">' +
-    '<video class="flat-bg-video" id="flat-bg-a" muted loop playsinline preload="metadata"></video>' +
-    '<video class="flat-bg-video" id="flat-bg-b" muted loop playsinline preload="metadata"></video>' +
+    '<video class="flat-bg-video" id="flat-bg-a" muted loop playsinline preload="none"></video>' +
+    '<video class="flat-bg-video" id="flat-bg-b" muted loop playsinline preload="none"></video>' +
   '</div>' +
   '<div class="flat-stage" id="flat-stage"></div>' +
   '<div class="flat-meta">' +
@@ -2107,9 +2143,13 @@ function bindFilm(video, film) {
     return;
   }
   if (video.getAttribute("data-cap") === film.cap) return;
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
   video.setAttribute("data-cap", film.cap);
+  video.dataset.src = film.src;
   video.poster = film.poster;
-  video.src = film.src;
+  video.preload = "none";
 }
 function syncBg(index) {
   const next = modIndex(Math.round(index));
@@ -2124,19 +2164,14 @@ function syncBg(index) {
   const incoming = bgUsingA ? bgB : bgA;
   const outgoing = bgUsingA ? bgA : bgB;
   bindFilm(incoming, film);
-  if (wasNear) incoming.play().catch(function () {});
+  if (wasNear) playFlat(incoming, true);
   incoming.classList.add("on");
   outgoing.classList.remove("on");
   bgUsingA = !bgUsingA;
   bgShown = next;
 }
 function playFlat(video, should) {
-  if (!video || !video.getAttribute("src")) return;
-  if (should) {
-    if (video.paused) video.play().catch(function () {});
-  } else if (!video.paused) {
-    video.pause();
-  }
+  loadVideo(video, should);
 }
 function measureFlat() {
   const h = flatStage.clientHeight || window.innerHeight * 0.7;
@@ -2286,6 +2321,8 @@ splitFilms.forEach(function (film, index) {
     const img = document.createElement("img");
     img.src = film.poster;
     img.alt = "";
+    img.loading = "lazy";
+    img.decoding = "async";
     btn.appendChild(img);
   } else {
     btn.classList.add("is-empty");
@@ -2433,7 +2470,7 @@ document.getElementById("mark").addEventListener("click", (e) => {
 
 playToggle.addEventListener("click", () => {
   wantPlay = !wantPlay;
-  [vidA, vidB].forEach((v) => wantPlay ? v.play().catch(() => {}) : v.pause());
+  [vidA, vidB].forEach((v) => loadVideo(v, wantPlay));
   playToggle.textContent = wantPlay ? "暂停" : "播放";
 });
 muteToggle.addEventListener("click", () => {
@@ -2476,7 +2513,10 @@ function render(p) {
     nextEl = currentEl === vidA ? vidB : vidA;
   }
   bind(currentEl, film);
-  if (next !== index) bind(nextEl, upcoming);
+  if (next !== index && fade > 0.02) bind(nextEl, upcoming);
+  loadVideo(currentEl, wantPlay);
+  if (next !== index && fade > 0.02) loadVideo(nextEl, wantPlay);
+  else if (nextEl !== currentEl) loadVideo(nextEl, false);
   const zoom = 1 + local * 0.14;
   currentEl.style.opacity = String(1 - fade);
   nextEl.style.opacity = String(next === index ? 0 : fade);
@@ -2510,10 +2550,7 @@ function render(p) {
     const zoom = finder.querySelector(".finder-zoom");
     const r = wide.getBoundingClientRect();
     const near = r.bottom > 0 && r.top < window.innerHeight;
-    [wide, zoom].forEach((video) => {
-      if (near && video.paused) video.play().catch(() => {});
-      if (!near && !video.paused) video.pause();
-    });
+    [wide, zoom].forEach((video) => loadVideo(video, near));
     if (near && Math.abs((zoom.currentTime || 0) - (wide.currentTime || 0)) > 0.12) zoom.currentTime = wide.currentTime;
   });
 
@@ -2523,8 +2560,7 @@ function render(p) {
     const mid = (r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight;
     const scale = 1.12 - Math.min(Math.abs(mid), 1) * 0.1;
     video.style.transform = "scale(" + scale.toFixed(4) + ")";
-    if (near && video.paused) video.play().catch(() => {});
-    if (!near && !video.paused) video.pause();
+    loadVideo(video, near);
   });
 
   const cover = 1 - clamp(portrait.getBoundingClientRect().top / window.innerHeight, 0, 1);
@@ -2562,15 +2598,14 @@ function finishIntro() {
   if (!introOn) return;
   introOn = false;
   bind(vidA, FILMS[0]);
-  bind(vidB, FILMS[1]);
-  vidA.play().catch(() => {});
+  loadVideo(vidA, wantPlay);
   pre.classList.add("opening");
   stage.classList.add("grown");
   setTimeout(() => pre.remove(), 460);
   setTimeout(() => {
     stage.classList.add("settled");
     document.documentElement.classList.remove("locking");
-  }, 2480);
+  }, 1750);
 }
 function frameBox() {
   const w = window.innerWidth;
@@ -2658,8 +2693,8 @@ function runIntroLine() {
   const len = preStroke.getTotalLength();
   preStroke.style.strokeDasharray = String(len);
   preStroke.style.strokeDashoffset = String(len);
-  const topMs = 760;
-  const restMs = 1180;
+  const topMs = 430;
+  const restMs = 650;
   const t0 = performance.now();
   function frame(now) {
     if (!introOn) return;
