@@ -735,7 +735,8 @@ body.ui button, body.ui a { cursor: pointer; }
 .flat-card-poster {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
+  pointer-events: none;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -746,14 +747,13 @@ body.ui button, body.ui a { cursor: pointer; }
 .flat-card video {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.28s ease;
+  opacity: 1;
 }
 .flat-card.video-ready video { opacity: 1; }
 .flat-card.video-ready .flat-card-poster { opacity: 0; }
@@ -2128,16 +2128,14 @@ function reconsiderLookahead() {
   const current = lookahead.current;
   const next = lookahead.next;
   if (!current || !next || !next.dataset.src || current === next ||
-      current.paused || current.dataset.playWanted !== "true" ||
       next.dataset.playWanted === "true") {
     stopSpeculation();
     return;
   }
+  // A temporary pause or buffer dip must not discard the next clip's existing data.
+  if (current.paused || current.dataset.playWanted !== "true") return;
   const ahead = bufferedAhead(current);
-  if (current.seeking || current.readyState < 3 || ahead < 0.5) {
-    stopSpeculation();
-    return;
-  }
+  if (current.seeking || current.readyState < 3 || ahead < 0.5) return;
   const remaining = Number.isFinite(current.duration) ? Math.max(0, current.duration - current.currentTime) : 3;
   if (ahead + 0.1 < Math.min(3, remaining)) return;
   if (speculativeVideo === next) return;
@@ -2172,6 +2170,7 @@ function loadVideo(video, shouldPlay) {
   if (!video) return;
   video.dataset.playWanted = shouldPlay ? "true" : "false";
   if (!shouldPlay) {
+    playRequests.delete(video);
     if (!video.paused) video.pause();
     if (speculativeVideo !== video) video.preload = "none";
     return;
@@ -2197,11 +2196,12 @@ function loadVideo(video, shouldPlay) {
   }).catch(function (error) {
     if (playRequests.get(video) !== request) return;
     playRequests.delete(video);
-    if (error && error.name === "NotAllowedError" &&
-        (video.id === "vid-a" || video.id === "vid-b")) {
+    if (error && error.name === "NotAllowedError") {
       video.dataset.playBlocked = "true";
-      const toggle = document.getElementById("play-toggle");
-      if (toggle) toggle.textContent = "播放";
+      if (video.id === "vid-a" || video.id === "vid-b") {
+        const toggle = document.getElementById("play-toggle");
+        if (toggle) toggle.textContent = "播放";
+      }
     }
   });
 }
@@ -2543,8 +2543,33 @@ function syncBg(index) {
   bgUsingA = !bgUsingA;
   bgShown = next;
 }
-function playFlat(video, should) {
-  loadVideo(video, should);
+function playFlat(video, should, userGesture) {
+  if (!video) return;
+  if (!should) {
+    video.autoplay = false;
+    loadVideo(video, false);
+    return;
+  }
+  video.defaultMuted = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.autoplay = true;
+  if (userGesture) {
+    delete video.dataset.playBlocked;
+    if (video.paused) playRequests.delete(video);
+    if (video.error) {
+      video.dataset.retryUsed = "false";
+      delete video.dataset.playBlocked;
+    }
+  }
+  if (video.error && video.dataset.retryUsed !== "true") {
+    video.dataset.retryUsed = "true";
+    playRequests.delete(video);
+    delete video.dataset.playBlocked;
+    video.src = video.dataset.src;
+    video.load();
+  }
+  loadVideo(video, true);
 }
 function measureFlat() {
   const h = flatStage.clientHeight || window.innerHeight * 0.7;
@@ -2594,7 +2619,7 @@ function applyFlat(animate) {
     syncBg(front);
     setMediaLookahead("ring", flatCards[front].querySelector("video"),
       flatCards[modIndex(front + 1)].querySelector("video"));
-  } else {
+  } else if (!dragging) {
     setMediaLookahead("ring", null, null);
   }
 }
@@ -2613,7 +2638,7 @@ function updateRing() {
       flatCards[modIndex(front + 1)].querySelector("video"));
   } else {
     setMediaLookahead("ring", null, null);
-    flatCards.forEach(function (card) { releaseSource(card.querySelector("video")); });
+    // Pause watched videos without dropping their downloaded buffer.
   }
 }
 
@@ -2630,17 +2655,29 @@ splitFilms.forEach(function (film, index) {
     poster.src = film.poster;
     card.appendChild(poster);
     const video = document.createElement("video");
+    video.defaultMuted = true;
     video.muted = true;
+    video.setAttribute("muted", "");
     video.loop = false;
     video.playsInline = true;
     video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
     video.preload = "none";
     bindFilm(video, film);
-    video.addEventListener("loadeddata", function () {
-      card.classList.add("video-ready");
+    function revealFrame() {
+      if (video.readyState >= 2) card.classList.add("video-ready");
+    }
+    ["loadeddata", "canplay", "playing", "timeupdate"].forEach(function (name) {
+      video.addEventListener(name, revealFrame);
+    });
+    video.addEventListener("canplay", function () {
+      if (video.dataset.playWanted === "true" && video.paused) playFlat(video, true);
     });
     video.addEventListener("error", function () {
       card.classList.remove("video-ready");
+      if (video.dataset.playWanted === "true" && video.dataset.retryUsed !== "true") {
+        playFlat(video, true);
+      }
     });
     video.addEventListener("emptied", function () {
       card.classList.remove("video-ready");
@@ -2662,9 +2699,14 @@ splitFilms.forEach(function (film, index) {
     if (dragMoved > 8) return;
     const index = flatCards.indexOf(card);
     const d = wrapDelta(index, active);
-    if (Math.abs(d) < 0.4 || Math.abs(d) > 1.2) return;
+    if (Math.abs(d) < 0.4) {
+      if (wasNear) playFlat(card.querySelector("video"), true, true);
+      return;
+    }
+    if (Math.abs(d) > 1.2) return;
     active += d;
     applyFlat(true);
+    if (wasNear) playFlat(card.querySelector("video"), true, true);
   });
   flatStage.appendChild(card);
   flatCards.push(card);
@@ -2711,11 +2753,11 @@ function endFlatPointer(event) {
   if (!wasDrag) return;
   dragging = false;
   flatStage.classList.remove("dragging");
-  const snapped = Math.round(active);
-  requestAnimationFrame(function () {
-    active = snapped;
-    applyFlat(true);
-  });
+  active = Math.round(active);
+  applyFlat(true);
+  if (wasNear && event.type === "pointerup") {
+    playFlat(flatCards[modIndex(active)].querySelector("video"), true, true);
+  }
 }
 window.addEventListener("pointerup", endFlatPointer);
 window.addEventListener("pointercancel", endFlatPointer);
@@ -2736,16 +2778,26 @@ splitFilms.forEach(function (film, index) {
   } else {
     btn.classList.add("is-empty");
   }
-  btn.addEventListener("pointerenter", function () {
+  btn.addEventListener("pointerenter", function (event) {
+    if (event.pointerType !== "mouse") return;
     const d = wrapDelta(index, active);
     if (Math.abs(d) < 0.35) return;
     active += d;
     applyFlat(true);
   });
+  btn.addEventListener("click", function () {
+    const d = wrapDelta(index, active);
+    if (Math.abs(d) >= 0.35) {
+      active += d;
+      applyFlat(true);
+    }
+    if (wasNear) playFlat(flatCards[index].querySelector("video"), true, true);
+  });
   flatStrip.appendChild(btn);
   flatThumbs.push(btn);
 });
-flatStrip.addEventListener("pointerenter", function () {
+flatStrip.addEventListener("pointerenter", function (event) {
+  if (event.pointerType !== "mouse") return;
   stripHover = true;
   flatStage.classList.add("scrub");
 });
