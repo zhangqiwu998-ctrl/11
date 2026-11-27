@@ -1,0 +1,521 @@
+[
+  {
+    "clip": "01",
+    "original_bytes": 5183902,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "844x360",
+        "segments": 5,
+        "seconds": 10.0,
+        "bytes": 738652,
+        "first_segment_bytes": 150588,
+        "peak_bps": 669205
+      },
+      {
+        "short_edge": 540,
+        "resolution": "1268x540",
+        "segments": 5,
+        "seconds": 10.0,
+        "bytes": 1239672,
+        "first_segment_bytes": 260756,
+        "peak_bps": 1147327
+      },
+      {
+        "short_edge": 720,
+        "resolution": "1690x720",
+        "segments": 5,
+        "seconds": 10.0,
+        "bytes": 2172528,
+        "first_segment_bytes": 458532,
+        "peak_bps": 2017541
+      }
+    ]
+  },
+  {
+    "clip": "02",
+    "original_bytes": 4255299,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "844x360",
+        "segments": 4,
+        "seconds": 7.0,
+        "bytes": 509668,
+        "first_segment_bytes": 145324,
+        "peak_bps": 658452
+      },
+      {
+        "short_edge": 540,
+        "resolution": "1268x540",
+        "segments": 4,
+        "seconds": 7.0,
+        "bytes": 849948,
+        "first_segment_bytes": 247784,
+        "peak_bps": 1091904
+      },
+      {
+        "short_edge": 720,
+        "resolution": "1690x720",
+        "segments": 4,
+        "seconds": 7.0,
+        "bytes": 1493848,
+        "first_segment_bytes": 442176,
+        "peak_bps": 1945575
+      }
+    ]
+  },
+  {
+    "clip": "03",
+    "original_bytes": 2374624,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "844x360",
+        "segments": 3,
+        "seconds": 5.0,
+        "bytes": 363780,
+        "first_segment_bytes": 139308,
+        "peak_bps": 688231
+      },
+      {
+        "short_edge": 540,
+        "resolution": "1268x540",
+        "segments": 3,
+        "seconds": 5.0,
+        "bytes": 605172,
+        "first_segment_bytes": 234436,
+        "peak_bps": 1116720
+      },
+      {
+        "short_edge": 720,
+        "resolution": "1690x720",
+        "segments": 3,
+        "seconds": 5.0,
+        "bytes": 1050732,
+        "first_segment_bytes": 416044,
+        "peak_bps": 1909178
+      }
+    ]
+  },
+  {
+    "clip": "plate",
+    "original_bytes": 6576612,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "640x360",
+        "segments": 4,
+        "seconds": 7.917,
+        "bytes": 617580,
+        "first_segment_bytes": 147580,
+        "peak_bps": 727109
+      },
+      {
+        "short_edge": 540,
+        "resolution": "960x540",
+        "segments": 4,
+        "seconds": 7.917,
+        "bytes": 1033436,
+        "first_segment_bytes": 245528,
+        "peak_bps": 1194477
+      },
+      {
+        "short_edge": 720,
+        "resolution": "1280x720",
+        "segments": 4,
+        "seconds": 7.917,
+        "bytes": 1791452,
+        "first_segment_bytes": 426760,
+        "peak_bps": 2060556
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1920x1080",
+        "segments": 4,
+        "seconds": 7.917,
+        "bytes": 3222132,
+        "first_segment_bytes": 776628,
+        "peak_bps": 3673631
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/01",
+    "original_bytes": 3897355,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 4,
+        "seconds": 6.967,
+        "bytes": 454396,
+        "first_segment_bytes": 108852,
+        "peak_bps": 740345
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 4,
+        "seconds": 6.967,
+        "bytes": 812912,
+        "first_segment_bytes": 197024,
+        "peak_bps": 1340892
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 4,
+        "seconds": 6.967,
+        "bytes": 1474296,
+        "first_segment_bytes": 362652,
+        "peak_bps": 2423696
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 4,
+        "seconds": 6.967,
+        "bytes": 2728632,
+        "first_segment_bytes": 680560,
+        "peak_bps": 4394914
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/02",
+    "original_bytes": 3788767,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 4,
+        "seconds": 8.0,
+        "bytes": 559300,
+        "first_segment_bytes": 109416,
+        "peak_bps": 701466
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 4,
+        "seconds": 8.0,
+        "bytes": 995460,
+        "first_segment_bytes": 197212,
+        "peak_bps": 1260653
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 4,
+        "seconds": 8.0,
+        "bytes": 1806680,
+        "first_segment_bytes": 363216,
+        "peak_bps": 2367447
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 4,
+        "seconds": 8.0,
+        "bytes": 3308236,
+        "first_segment_bytes": 671536,
+        "peak_bps": 4456954
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/03",
+    "original_bytes": 4577125,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 4,
+        "seconds": 7.75,
+        "bytes": 543320,
+        "first_segment_bytes": 120320,
+        "peak_bps": 785013
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 4,
+        "seconds": 7.75,
+        "bytes": 981548,
+        "first_segment_bytes": 224848,
+        "peak_bps": 1363226
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 4,
+        "seconds": 7.75,
+        "bytes": 1786752,
+        "first_segment_bytes": 423188,
+        "peak_bps": 2428660
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 4,
+        "seconds": 7.75,
+        "bytes": 3269696,
+        "first_segment_bytes": 773056,
+        "peak_bps": 4371752
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/04",
+    "original_bytes": 4989867,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 4,
+        "seconds": 8.0,
+        "bytes": 505720,
+        "first_segment_bytes": 120884,
+        "peak_bps": 589794
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 4,
+        "seconds": 8.0,
+        "bytes": 920260,
+        "first_segment_bytes": 225976,
+        "peak_bps": 1089423
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 4,
+        "seconds": 8.0,
+        "bytes": 1691812,
+        "first_segment_bytes": 414728,
+        "peak_bps": 2026641
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 4,
+        "seconds": 8.0,
+        "bytes": 3153700,
+        "first_segment_bytes": 762716,
+        "peak_bps": 3874605
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/05",
+    "original_bytes": 3409927,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 3,
+        "seconds": 5.633,
+        "bytes": 350432,
+        "first_segment_bytes": 115432,
+        "peak_bps": 688771
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 3,
+        "seconds": 5.633,
+        "bytes": 626792,
+        "first_segment_bytes": 211500,
+        "peak_bps": 1241814
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 3,
+        "seconds": 5.633,
+        "bytes": 1166540,
+        "first_segment_bytes": 396304,
+        "peak_bps": 2344860
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 3,
+        "seconds": 5.633,
+        "bytes": 2173468,
+        "first_segment_bytes": 755760,
+        "peak_bps": 4225812
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/06",
+    "original_bytes": 4978114,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 5,
+        "seconds": 9.033,
+        "bytes": 573588,
+        "first_segment_bytes": 113928,
+        "peak_bps": 707657
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 5,
+        "seconds": 9.033,
+        "bytes": 1018396,
+        "first_segment_bytes": 204544,
+        "peak_bps": 1232796
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 5,
+        "seconds": 9.033,
+        "bytes": 1857816,
+        "first_segment_bytes": 375060,
+        "peak_bps": 2239845
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 5,
+        "seconds": 9.033,
+        "bytes": 3405432,
+        "first_segment_bytes": 724364,
+        "peak_bps": 4039406
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/07",
+    "original_bytes": 2827061,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 3,
+        "seconds": 4.2,
+        "bytes": 304748,
+        "first_segment_bytes": 103964,
+        "peak_bps": 809002
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 3,
+        "seconds": 4.2,
+        "bytes": 538808,
+        "first_segment_bytes": 196084,
+        "peak_bps": 1381424
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 3,
+        "seconds": 4.2,
+        "bytes": 963876,
+        "first_segment_bytes": 370360,
+        "peak_bps": 2393090
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 3,
+        "seconds": 4.2,
+        "bytes": 1755544,
+        "first_segment_bytes": 704812,
+        "peak_bps": 4243536
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/08",
+    "original_bytes": 3143027,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 3,
+        "seconds": 4.5,
+        "bytes": 248912,
+        "first_segment_bytes": 106972,
+        "peak_bps": 580695
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 3,
+        "seconds": 4.5,
+        "bytes": 450448,
+        "first_segment_bytes": 202664,
+        "peak_bps": 1036482
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 3,
+        "seconds": 4.5,
+        "bytes": 826636,
+        "first_segment_bytes": 391604,
+        "peak_bps": 1838866
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 3,
+        "seconds": 4.5,
+        "bytes": 1535584,
+        "first_segment_bytes": 768544,
+        "peak_bps": 3381594
+      }
+    ]
+  },
+  {
+    "clip": "portfolio/09",
+    "original_bytes": 4025518,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 3,
+        "seconds": 5.817,
+        "bytes": 381452,
+        "first_segment_bytes": 113364,
+        "peak_bps": 649352
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 3,
+        "seconds": 5.817,
+        "bytes": 692592,
+        "first_segment_bytes": 211500,
+        "peak_bps": 1181242
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 3,
+        "seconds": 5.817,
+        "bytes": 1253020,
+        "first_segment_bytes": 400816,
+        "peak_bps": 2077100
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 3,
+        "seconds": 5.817,
+        "bytes": 2326312,
+        "first_segment_bytes": 754632,
+        "peak_bps": 3660361
+      }
+    ]
+  }
+]
