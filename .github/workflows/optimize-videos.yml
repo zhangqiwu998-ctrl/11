@@ -1,0 +1,125 @@
+name: Optimize portfolio videos
+
+on:
+  workflow_dispatch:
+    inputs:
+      quality:
+        description: "Compression quality"
+        required: true
+        type: choice
+        options:
+          - high
+          - balanced
+          - smaller
+        default: balanced
+
+permissions:
+  contents: write
+
+concurrency:
+  group: optimize-portfolio-videos
+  cancel-in-progress: false
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Compress MP4 files
+        id: compress
+        env:
+          QUALITY: ${{ inputs.quality }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -f .video-optimized-v1 ]]; then
+            echo "This repository has already been optimized. Remove .video-optimized-v1 only if you intentionally want to encode the files again."
+            exit 0
+          fi
+
+          case "$QUALITY" in
+            high) CRF=22 ;;
+            balanced) CRF=24 ;;
+            smaller) CRF=26 ;;
+            *) echo "Unknown quality: $QUALITY"; exit 1 ;;
+          esac
+
+          ORIGINAL_TOTAL=0
+          FINAL_TOTAL=0
+          CHANGED=0
+          REPORT="$RUNNER_TEMP/video-report.md"
+          printf '| File | Original | Final | Saved |\n|---|---:|---:|---:|\n' > "$REPORT"
+
+          while IFS= read -r -d '' FILE; do
+            BEFORE=$(stat -c%s "$FILE")
+            ORIGINAL_TOTAL=$((ORIGINAL_TOTAL + BEFORE))
+            TMP="${FILE}.optimized.mp4"
+
+            echo "Optimizing $FILE ($BEFORE bytes, CRF $CRF)"
+            ffmpeg -hide_banner -loglevel error -y -i "$FILE" \
+              -map 0:v:0 -map '0:a?' -map_metadata 0 \
+              -vf "scale='min(1920,iw)':'min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2:flags=lanczos" \
+              -c:v libx264 -preset slow -crf "$CRF" -pix_fmt yuv420p \
+              -c:a aac -b:a 128k -movflags +faststart \
+              "$TMP"
+
+            ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height \
+              -of csv=p=0 "$TMP" >/dev/null
+
+            AFTER=$(stat -c%s "$TMP")
+            if (( AFTER < BEFORE )); then
+              mv "$TMP" "$FILE"
+              CHANGED=$((CHANGED + 1))
+              SAVED=$((BEFORE - AFTER))
+              echo "Saved $SAVED bytes: $FILE"
+            else
+              rm -f "$TMP"
+              AFTER=$BEFORE
+              SAVED=0
+              echo "Kept original because re-encode was not smaller: $FILE"
+            fi
+
+            FINAL_TOTAL=$((FINAL_TOTAL + AFTER))
+            printf '| %s | %.2f MB | %.2f MB | %.2f MB |\n' \
+              "$FILE" "$(awk "BEGIN {print $BEFORE/1048576}")" \
+              "$(awk "BEGIN {print $AFTER/1048576}")" \
+              "$(awk "BEGIN {print $SAVED/1048576}")" >> "$REPORT"
+          done < <(find assets/films -type f -iname '*.mp4' -print0 | sort -z)
+
+          touch .video-optimized-v1
+          {
+            echo "### Video optimization report"
+            echo
+            echo "- Quality preset: $QUALITY (CRF $CRF)"
+            echo "- Files changed: $CHANGED"
+            echo "- Total before: $(awk "BEGIN {printf \"%.2f\", $ORIGINAL_TOTAL/1048576}") MB"
+            echo "- Total after: $(awk "BEGIN {printf \"%.2f\", $FINAL_TOTAL/1048576}") MB"
+            echo
+            cat "$REPORT"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit optimized videos
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/films .video-optimized-v1
+          if git diff --cached --quiet; then
+            echo "No optimized files to commit."
+            exit 0
+          fi
+          git commit -m "Optimize portfolio videos for faster playback"
+          git push origin HEAD:main
