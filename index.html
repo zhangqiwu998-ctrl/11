@@ -1724,10 +1724,7 @@ muteToggle.addEventListener("click", () => {
   if (wantSound && wantPlay) vidA.play().catch(() => {});
 });
 
-stage.addEventListener("pointerdown", (e) => {
-  if (e.target.closest("button, a")) return;
-  playToggle.click();
-});
+// Video surface clicks no longer toggle playback; use the explicit playback control.
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowDown" || e.key === "ArrowRight") {
