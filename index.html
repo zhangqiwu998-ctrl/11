@@ -625,7 +625,7 @@ body.ui button, body.ui a { cursor: pointer; }
   overflow: hidden;
 }
 .flat-bg { position: absolute; inset: 0; overflow: hidden; }
-.flat-bg-video {
+.flat-bg-poster {
   position: absolute;
   left: -8%;
   top: -8%;
@@ -636,7 +636,7 @@ body.ui button, body.ui a { cursor: pointer; }
   opacity: 0;
   transition: opacity 0.9s ease;
 }
-.flat-bg-video.on { opacity: 1; }
+.flat-bg-poster.on { opacity: 1; }
 .flat-bg::after {
   content: "";
   position: absolute;
@@ -671,13 +671,31 @@ body.ui button, body.ui a { cursor: pointer; }
 }
 .flat-card.instant,
 .flat-stage.dragging .flat-card { transition: none; }
+.flat-card-poster {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 1;
+  transition: opacity 0.28s ease;
+}
 .flat-card video {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.28s ease;
 }
+.flat-card.video-ready video { opacity: 1; }
+.flat-card.video-ready .flat-card-poster { opacity: 0; }
 .flat-card.is-side { filter: brightness(0.68) saturate(0.9); }
 .flat-card.is-far { opacity: 0; pointer-events: none; filter: brightness(0.68); }
 .flat-card.is-empty {
@@ -2019,6 +2037,7 @@ const openB = document.getElementById("open-b");
 let wantSound = false;
 let wantPlay = true;
 let shown = -1;
+let activeTimeVideo = vidA;
 let targetP = 0;
 let smoothP = 0;
 
@@ -2028,6 +2047,14 @@ function fmt(t) {
   const s = Math.max(0, Math.floor(t));
   return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 }
+function updateReelTime(event) {
+  if (event.currentTarget !== activeTimeVideo) return;
+  timeEl.textContent = fmt(activeTimeVideo.currentTime);
+  totalEl.textContent = fmt(activeTimeVideo.duration);
+}
+[vidA, vidB].forEach(function (video) {
+  video.addEventListener("timeupdate", updateReelTime);
+});
 function bind(video, film) {
   if (video.dataset.id === film.id) return;
   video.pause();
@@ -2090,7 +2117,7 @@ CASES.forEach((film) => {
     const finder = document.createElement("article");
     finder.className = "finder";
     finder.innerHTML =
-      '<video class="finder-film" muted loop playsinline preload="none"></video>' +
+      '<img class="finder-film" alt="" loading="eager" decoding="async">' +
       '<div class="finder-layout">' +
         '<p class="finder-word above"></p>' +
         '<div class="finder-gate">' +
@@ -2102,11 +2129,15 @@ CASES.forEach((film) => {
         '</div>' +
         '<p class="finder-word below"></p>' +
       '</div>';
-    finder.querySelectorAll("video").forEach((video) => {
-      video.poster = mediaUrl("platep", "image/jpeg");
-      video.dataset.src = mediaUrl("platev", "video/mp4");
-      video.preload = "none";
-    });
+    const backdrop = finder.querySelector(".finder-film");
+    backdrop.src = mediaUrl("platep", "image/jpeg");
+    const zoomVideo = finder.querySelector(".finder-zoom");
+    zoomVideo.poster = mediaUrl("platep", "image/jpeg");
+    zoomVideo.dataset.src = mediaUrl("platev", "video/mp4");
+    zoomVideo.muted = true;
+    zoomVideo.loop = true;
+    zoomVideo.playsInline = true;
+    zoomVideo.preload = "none";
     finder.querySelector(".finder-word.above").textContent = film.left;
     finder.querySelector(".finder-word.below").textContent = film.right;
     finder.querySelector(".vf-kicker").textContent = film.id;
@@ -2160,8 +2191,8 @@ const splitFilms = [
 ];
 split.innerHTML =
   '<div class="flat-bg" id="flat-bg">' +
-    '<video class="flat-bg-video" id="flat-bg-a" muted loop playsinline preload="none"></video>' +
-    '<video class="flat-bg-video" id="flat-bg-b" muted loop playsinline preload="none"></video>' +
+    '<img class="flat-bg-poster" id="flat-bg-a" alt="" decoding="async">' +
+    '<img class="flat-bg-poster" id="flat-bg-b" alt="" decoding="async">' +
   '</div>' +
   '<div class="flat-stage" id="flat-stage"></div>' +
   '<div class="flat-meta">' +
@@ -2216,18 +2247,24 @@ function syncBg(index) {
   const next = modIndex(Math.round(index));
   if (next === bgShown) return;
   const film = splitFilms[next];
-  if (!film.src) {
-    bgA.classList.remove("on");
-    bgB.classList.remove("on");
-    bgShown = next;
-    return;
-  }
   const incoming = bgUsingA ? bgB : bgA;
   const outgoing = bgUsingA ? bgA : bgB;
-  bindFilm(incoming, film);
-  if (wasNear) playFlat(incoming, true);
-  incoming.classList.add("on");
-  outgoing.classList.remove("on");
+  const reveal = function () {
+    incoming.classList.add("on");
+    outgoing.classList.remove("on");
+  };
+  incoming.onload = null;
+  incoming.onerror = null;
+  incoming.decoding = "async";
+  if (incoming.getAttribute("src") === film.poster && incoming.complete && incoming.naturalWidth) {
+    reveal();
+  } else {
+    incoming.classList.remove("on");
+    incoming.onload = reveal;
+    incoming.onerror = reveal;
+    incoming.src = film.poster;
+    if (incoming.complete && incoming.naturalWidth) reveal();
+  }
   bgUsingA = !bgUsingA;
   bgShown = next;
 }
@@ -2264,7 +2301,12 @@ function applyFlat(animate) {
     card.classList.toggle("is-side", Math.abs(d) >= 0.45 && Math.abs(d) <= 1.45);
     card.classList.toggle("is-far", Math.abs(d) > 1.45);
     card._d = d;
-    playFlat(card.querySelector("video"), wasNear && Math.abs(d) < 0.45);
+    const cardVideo = card.querySelector("video");
+    if (dragging) {
+      if (cardVideo && !cardVideo.paused) cardVideo.pause();
+    } else {
+      playFlat(cardVideo, wasNear && Math.abs(d) < 0.45);
+    }
   });
   if (animate) {
     void flatStage.offsetWidth;
@@ -2273,10 +2315,12 @@ function applyFlat(animate) {
   }
   flatCap.textContent = splitFilms[front].cap;
   flatThumbs.forEach(function (btn, i) { btn.classList.toggle("on", i === front); });
-  syncBg(front);
-  if (wasNear) {
-    const upcoming = splitFilms[modIndex(front + 1)];
-    if (upcoming && upcoming.src) prefetchVideoInBackground(upcoming.src);
+  if (!dragging) {
+    syncBg(front);
+    if (wasNear) {
+      const upcoming = splitFilms[modIndex(front + 1)];
+      if (upcoming && upcoming.src) prefetchVideoInBackground(upcoming.src);
+    }
   }
 }
 function updateRing() {
@@ -2292,14 +2336,20 @@ function updateRing() {
     const upcoming = splitFilms[modIndex(front + 1)];
     if (upcoming && upcoming.src) prefetchVideoInBackground(upcoming.src);
   }
-  playFlat(bgA, near && bgA.classList.contains("on"));
-  playFlat(bgB, near && bgB.classList.contains("on"));
+
 }
 
 splitFilms.forEach(function (film, index) {
   const card = document.createElement("article");
   card.className = "flat-card";
   if (film.src) {
+    const poster = document.createElement("img");
+    poster.className = "flat-card-poster";
+    poster.src = film.poster;
+    poster.alt = "";
+    poster.loading = "eager";
+    poster.decoding = "async";
+    card.appendChild(poster);
     const video = document.createElement("video");
     video.muted = true;
     video.loop = false;
@@ -2307,6 +2357,12 @@ splitFilms.forEach(function (film, index) {
     video.setAttribute("playsinline", "");
     video.preload = "none";
     bindFilm(video, film);
+    video.addEventListener("loadeddata", function () {
+      card.classList.add("video-ready");
+    });
+    video.addEventListener("error", function () {
+      card.classList.remove("video-ready");
+    });
     video.addEventListener("ended", function () {
       if (!wasNear || dragging || stripHover) return;
       if (modIndex(Math.round(active)) !== flatCards.indexOf(card)) return;
@@ -2566,6 +2622,9 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
+const finderBlocks = Array.from(document.querySelectorAll(".finder"));
+const caseMediaVideos = Array.from(document.querySelectorAll(".case-media video"));
+
 function render(p) {
   const x = clamp(p, 0, 0.9999) * FILMS.length;
   const index = Math.min(FILMS.length - 1, Math.floor(x));
@@ -2613,21 +2672,19 @@ function render(p) {
   titleL.style.transform = "translateY(" + (local * -18) + "px)";
   titleR.style.transform = "translateY(" + (local * 14) + "px)";
   [...ruler.children].forEach((btn, i) => btn.classList.toggle("is-on", i === index));
-  const active = (!currentEl.muted && wantSound) ? currentEl : (fade > 0.5 ? nextEl : currentEl);
-  timeEl.textContent = fmt(active.currentTime);
-  totalEl.textContent = fmt(active.duration);
+  activeTimeVideo = (!currentEl.muted && wantSound) ? currentEl : (fade > 0.5 ? nextEl : currentEl);
+  timeEl.textContent = fmt(activeTimeVideo.currentTime);
+  totalEl.textContent = fmt(activeTimeVideo.duration);
   shown = index;
 
-  document.querySelectorAll(".finder").forEach((finder) => {
-    const wide = finder.querySelector(".finder-film");
-    const zoom = finder.querySelector(".finder-zoom");
-    const r = wide.getBoundingClientRect();
+  finderBlocks.forEach((finder) => {
+    const video = finder.querySelector(".finder-zoom");
+    const r = finder.getBoundingClientRect();
     const near = r.bottom > 0 && r.top < window.innerHeight;
-    [wide, zoom].forEach((video) => loadVideo(video, near));
-    if (near && Math.abs((zoom.currentTime || 0) - (wide.currentTime || 0)) > 0.12) zoom.currentTime = wide.currentTime;
+    loadVideo(video, near);
   });
 
-  document.querySelectorAll(".case-media video").forEach((video) => {
+  caseMediaVideos.forEach((video) => {
     const r = video.getBoundingClientRect();
     const near = r.bottom > 0 && r.top < window.innerHeight;
     const mid = (r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight;
@@ -2642,7 +2699,13 @@ function render(p) {
   frame.style.pointerEvents = cover > 0.08 ? "none" : "auto";
 }
 
+let tickFrame = 0;
+function scheduleTick() {
+  if (tickFrame || document.hidden) return;
+  tickFrame = requestAnimationFrame(tick);
+}
 function tick() {
+  tickFrame = 0;
   const travel = filmTravel();
   targetP = clamp(window.scrollY / travel, 0, 0.9999);
   smoothP += (targetP - smoothP) * 0.12;
@@ -2651,8 +2714,18 @@ function tick() {
   updateRing();
   updateRecord();
   updateContact();
-  requestAnimationFrame(tick);
+  if (Math.abs(targetP - smoothP) >= 0.0004) scheduleTick();
 }
+window.addEventListener("scroll", scheduleTick, { passive: true });
+window.addEventListener("resize", scheduleTick, { passive: true });
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) {
+    document.querySelectorAll("video").forEach(function (video) { video.pause(); });
+  } else {
+    wasNear = false;
+    scheduleTick();
+  }
+});
 
 const pre = document.getElementById("preloader");
 const preLine = document.getElementById("pre-line");
