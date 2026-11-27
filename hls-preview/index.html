@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>作品集 · HLS A/B 测试</title>
+<style>
+:root{color-scheme:dark}body{font:16px system-ui,sans-serif;background:#101216;color:#eee;margin:0;padding:20px}main{max-width:760px;margin:auto}h1{font-size:24px}p{line-height:1.6;color:#b7bdc8}label,button,select{font:inherit}button,select{background:#252b34;color:#fff;border:1px solid #4c5768;padding:10px;border-radius:8px}button{cursor:pointer}.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}video{display:block;margin:16px auto;width:100%;max-height:60vh;background:#000;object-fit:contain}pre{white-space:pre-wrap;background:#1a2028;padding:14px;border-radius:8px;line-height:1.6}.note{font-size:13px}
+</style>
+<main><h1>HLS / MP4 对照测试</h1><p>同一视频、同一设备、同一网络，逐次播放。此页面不注册 Service Worker，不并行下载两个版本。浏览器仍可能保留 HTTP 缓存；公平测试请清除缓存、交替测试顺序。</p>
+<div class="controls"><label>视频 <select id="clip"><option value="landscape">横屏 01</option><option value="portrait">竖屏 08</option></select></label><button id="mp4">播放原 MP4</button><button id="low">播放 540P MP4</button><button id="hls">播放 HLS（自动画质）</button><button id="stop">停止</button></div>
+<video id="video" playsinline muted controls></video>
+<pre id="report">请选择一种播放方式。</pre>
+<p class="note">首帧优先采用 requestVideoFrameCallback，无法使用时记录 playing 事件。缓冲次数仅统计首帧之后的 waiting 事件。原生 HLS 不一定公开当前码率；无法读取时不虚报。性能数据只留在当前页面。</p>
+<button id="copy">复制本次测试数据</button>
+<p><a href="encoding-report.json">编码文件体积报告</a></p></main>
+<script src="hls.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);const v=$("video");let hls=null,session=0,clean=[],frameCallback=0,report={};
+function show(){ $("report").textContent=JSON.stringify(report,null,2); }
+function listen(name,fn){v.addEventListener(name,fn);clean.push(()=>v.removeEventListener(name,fn));}
+function stop(){session++;clean.forEach(f=>f());clean=[];if(frameCallback&&v.cancelVideoFrameCallback)v.cancelVideoFrameCallback(frameCallback);frameCallback=0;if(hls){hls.destroy();hls=null;}v.pause();v.removeAttribute("src");v.load();}
+function start(mode){stop();const current=session,clip=$("clip").value,base=clip+"/";const began=performance.now();let stallStart=null;report={clip,mode,engine:mode,firstFrameMs:null,firstFrameMethod:null,stalls:0,stallMs:0,quality:null,error:null};v.defaultMuted=true;v.muted=true;v.playsInline=true;v.poster=base+"poster.jpg";v.preload="auto";
+function first(method){if(current!==session||report.firstFrameMs!==null)return;report.firstFrameMs=Math.round(performance.now()-began);report.firstFrameMethod=method;show();}
+if(v.requestVideoFrameCallback){frameCallback=v.requestVideoFrameCallback(()=>{frameCallback=0;first("decoded frame");});}
+listen("playing",()=>{if(!v.requestVideoFrameCallback)first("playing");if(stallStart!==null){report.stallMs+=Math.round(performance.now()-stallStart);stallStart=null;}show();});
+listen("waiting",()=>{if(report.firstFrameMs!==null&&!v.paused&&!v.seeking&&stallStart===null){report.stalls++;stallStart=performance.now();show();}});
+listen("error",()=>{report.error=v.error? "MediaError "+v.error.code:"media error";show();});
+function play(){if(current!==session)return;v.play().catch(e=>{report.error=e.name+": "+e.message;show();});}
+if(mode==="MP4"||mode==="MP4 540P"){v.src=base+(mode==="MP4"?"original.mp4":"540.mp4");play();}
+else if(v.canPlayType("application/vnd.apple.mpegurl")){report.engine="native HLS";v.src=base+"master.m3u8";play();}
+else if(window.Hls&&Hls.isSupported()){report.engine="hls.js";hls=new Hls({startLevel:0,capLevelToPlayerSize:true});hls.on(Hls.Events.LEVEL_SWITCHED,(_,data)=>{if(current===session){const l=hls.levels[data.level];report.quality=l?l.width+"x"+l.height:null;show();}});hls.on(Hls.Events.ERROR,(_,data)=>{if(current===session&&data.fatal){report.error=data.details;show();}});hls.on(Hls.Events.MEDIA_ATTACHED,()=>{if(current===session)hls.loadSource(base+"master.m3u8");});hls.on(Hls.Events.MANIFEST_PARSED,play);hls.attachMedia(v);}
+else{report.error="该浏览器不支持 HLS；请选择 MP4";}
+show();}
+$("mp4").onclick=()=>start("MP4");$("low").onclick=()=>start("MP4 540P");$("hls").onclick=()=>start("HLS");$("stop").onclick=()=>{stop();show();};$("clip").onchange=stop;
+$("copy").onclick=()=>navigator.clipboard.writeText(JSON.stringify(report,null,2)).catch(()=>{});
+</script></html>
