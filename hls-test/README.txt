@@ -1,0 +1,2 @@
+独立 HLS 对比实验，不影响正式站。
+下载并解压 Actions artifact hls-playback-test，在解压目录运行 python3 -m http.server 8000，然后打开 http://localhost:8000/。请勿直接双击 HTML（HLS 需要 HTTP）。手机可在同一 Wi-Fi 下访问电脑的局域网 IP:8000（防火墙需允许）。本地测试不代表 GitHub CDN 实际速度；要比较公网，需要在独立站点托管本目录。建议每个视频在相同网络、关闭缓存的条件下交换顺序测试至少三次，记录首帧、卡顿和画质。iOS Safari 原生 HLS 的码率信息可能不可用。原始 MP4 为当前正式站压缩后的同一个文件；HLS 额外转码，测试并非完全相同码率。

@@ -1,0 +1,33 @@
+name: HLS isolated playback experiment
+on:
+  push:
+    branches: [hls-playback-test]
+    paths: [".github/workflows/hls-playback-test.yml", "hls-test/**"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install FFmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - name: Encode and validate two clips
+        run: python3 hls-test/build.py
+      - name: Prepare comparison page
+        run: |
+          cp hls-test/index.html hls-preview/index.html
+          cp hls-test/README.txt hls-preview/README.txt
+          npm pack hls.js@1.5.18 --pack-destination "$RUNNER_TEMP"
+          tar -xOf "$RUNNER_TEMP/hls.js-1.5.18.tgz" package/dist/hls.min.js > hls-preview/hls.min.js
+          tar -xOf "$RUNNER_TEMP/hls.js-1.5.18.tgz" package/LICENSE > hls-preview/hls.js-LICENSE
+          test -s hls-preview/hls.min.js
+          cat hls-preview/encoding-report.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hls-playback-test
+          path: hls-preview/
+          if-no-files-found: error
+          retention-days: 14
