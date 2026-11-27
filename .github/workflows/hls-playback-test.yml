@@ -2,32 +2,49 @@ name: HLS isolated playback experiment
 on:
   push:
     branches: [hls-playback-test]
-    paths: [".github/workflows/hls-playback-test.yml", "hls-test/**"]
+    paths: [".github/workflows/hls-playback-test.yml"]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
+  actions: read
 jobs:
-  build:
+  publish-preview:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Install FFmpeg
-        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
-      - name: Encode and validate two clips
-        run: python3 hls-test/build.py
-      - name: Prepare comparison page
-        run: |
-          cp hls-test/index.html hls-preview/index.html
-          cp hls-test/README.txt hls-preview/README.txt
-          npm pack hls.js@1.5.18 --pack-destination "$RUNNER_TEMP"
-          tar -xOf "$RUNNER_TEMP/hls.js-1.5.18.tgz" package/dist/hls.min.js > hls-preview/hls.min.js
-          tar -xOf "$RUNNER_TEMP/hls.js-1.5.18.tgz" package/LICENSE > hls-preview/hls.js-LICENSE
-          test -s hls-preview/hls.min.js
-          cat hls-preview/encoding-report.json >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - name: Retrieve already validated media
+        uses: actions/download-artifact@v4
         with:
           name: hls-playback-test
-          path: hls-preview/
-          if-no-files-found: error
-          retention-days: 14
+          path: hls-preview
+          github-token: ${{ github.token }}
+          run-id: 46027751907
+      - name: Add matched 540P MP4 control
+        run: |
+          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
+          for clip in landscape portrait; do
+            ffmpeg -v error -y -i "hls-preview/$clip/540/index.m3u8" -c copy -movflags +faststart "hls-preview/$clip/540.mp4"
+            ffmpeg -v error -xerror -i "hls-preview/$clip/540.mp4" -f null -
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("hls-preview/index.html")
+          s=p.read_text()
+          s=s.replace('<button id="hls">','<button id="low">播放 540P MP4</button><button id="hls">')
+          s=s.replace('if(mode==="MP4"){v.src=base+"original.mp4";play();}', 'if(mode==="MP4"||mode==="MP4 540P"){v.src=base+(mode==="MP4"?"original.mp4":"540.mp4");play();}')
+          s=s.replace('$("mp4").onclick=()=>start("MP4");', '$("mp4").onclick=()=>start("MP4");$("low").onclick=()=>start("MP4 540P");')
+          assert 'id="low"' in s and 'mode==="MP4 540P"' in s
+          p.write_text(s)
+          PY
+          test -s hls-preview/landscape/master.m3u8
+          test -s hls-preview/portrait/master.m3u8
+      - name: Commit generated preview only to experiment branch
+        run: |
+          test "$GITHUB_REF" = refs/heads/hls-playback-test
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f hls-preview
+          git commit -m "Publish standalone HLS comparison assets"
+          git push origin HEAD:refs/heads/hls-playback-test
+          git rev-parse HEAD:hls-preview
