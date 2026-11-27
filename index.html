@@ -1675,6 +1675,122 @@ body.ui button, body.ui a { cursor: pointer; }
 }
 
 
+
+/* Portrait opening reel: a dedicated mobile cinema-poster composition.
+   Desktop layout and all lower portfolio sections remain unchanged. */
+@media (max-width: 800px) and (orientation: portrait) {
+  #stage {
+    background: #050b14;
+  }
+  #stage::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: -5%;
+    pointer-events: none;
+    background-image:
+      linear-gradient(180deg, rgba(3, 7, 14, 0.46), rgba(3, 9, 18, 0.72)),
+      var(--mobile-film-poster, linear-gradient(135deg, #071a2d, #03060d));
+    background-position: center, center;
+    background-size: cover, cover;
+    filter: blur(28px) saturate(0.82) brightness(0.58);
+    opacity: 0.86;
+    transform: scale(1.08);
+    transition: opacity 0.5s ease;
+  }
+
+  .frame {
+    top: 39svh !important;
+    right: 4vw !important;
+    bottom: auto !important;
+    left: 4vw !important;
+    width: 92vw;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    overflow: visible !important;
+    border-radius: 14px !important;
+    background: rgba(2, 6, 12, 0.72);
+    box-shadow:
+      0 18px 54px rgba(0, 0, 0, 0.34),
+      inset 0 0 0 1px rgba(244, 241, 234, 0.62);
+  }
+  .frame video,
+  #stage.grown .frame video {
+    clip-path: none !important;
+    transform: none !important;
+    border-radius: 13px;
+    object-fit: contain;
+    background: rgba(2, 5, 10, 0.82);
+    transition: opacity 0.38s ease;
+    will-change: opacity;
+  }
+
+  .open-title {
+    inset: auto 0 calc(100% + 2.8svh) 0;
+    height: 26svh;
+    justify-content: flex-end;
+    gap: 1px;
+  }
+  .open-clip {
+    width: 100%;
+  }
+  .open-clip span {
+    font-size: clamp(58px, 17vw, 82px);
+    line-height: 0.76;
+    letter-spacing: -0.055em;
+    text-shadow: 0 8px 30px rgba(0, 0, 0, 0.42);
+  }
+  #stage.grown .open-clip span {
+    transition: transform 0.86s cubic-bezier(0.22, 0.08, 0.16, 1) 0.18s,
+                filter 0.86s ease 0.18s;
+  }
+  #stage.grown .open-clip:nth-child(2) span {
+    transition-delay: 0.3s, 0.3s;
+  }
+
+  .side {
+    display: flex !important;
+    top: calc(39svh + 51.75vw + 4.5svh);
+    right: auto;
+    bottom: auto;
+    width: 50%;
+    padding: 0 6vw;
+    justify-content: flex-start;
+    gap: 9px;
+  }
+  .side.left {
+    left: 0;
+    right: auto;
+    align-items: flex-start;
+    text-align: left;
+  }
+  .side.right {
+    right: 0;
+    left: auto;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .side h1 {
+    display: none !important;
+  }
+  .side::before {
+    content: "";
+    display: block;
+    width: 28px;
+    height: 1px;
+    flex: 0 0 1px;
+    background: rgba(244, 241, 234, 0.52);
+  }
+  .side .kicker {
+    margin: 0;
+    color: rgba(244, 241, 234, 0.78);
+    font-size: 9px;
+    line-height: 1.5;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2693,6 +2809,10 @@ function render(p) {
   const next = Math.min(FILMS.length - 1, index + 1);
   const fade = next === index ? 0 : clamp((local - 0.78) / 0.22, 0, 1);
   const film = FILMS[index];
+  if (stage.dataset.mobileFilm !== film.id) {
+    stage.dataset.mobileFilm = film.id;
+    stage.style.setProperty("--mobile-film-poster", 'url("' + film.poster + '")');
+  }
   const upcoming = FILMS[next];
   let currentEl = [vidA, vidB].find((v) => v.dataset.id === film.id) || null;
   let nextEl;
