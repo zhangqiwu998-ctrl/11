@@ -1914,6 +1914,11 @@ function watchVideo(video) {
   }, { rootMargin: "260px 0px" });
   observer.observe(video);
 }
+// Defer off-screen images and decode them asynchronously.
+document.querySelectorAll("img").forEach(function (img) {
+  if (!img.closest(".hero-card")) img.loading = "lazy";
+  img.decoding = "async";
+});
 var posterMap = {};
 FILMS.forEach(function (film) {
   var oldPoster = film.poster;
@@ -2235,7 +2240,7 @@ splitFilms.forEach(function (film, index) {
     video.loop = false;
     video.playsInline = true;
     video.setAttribute("playsinline", "");
-    video.preload = "metadata";
+    video.preload = "none";
     bindFilm(video, film);
     video.addEventListener("ended", function () {
       if (!wasNear || dragging || stripHover) return;
