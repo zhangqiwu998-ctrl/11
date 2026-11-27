@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>双击打开</title>
   <style>
 @font-face {
@@ -988,6 +988,349 @@ body.ui button, body.ui a { cursor: pointer; }
   .contact-photo { justify-self: start; max-width: 280px; }
 }
 
+
+/* Mobile layout refinement */
+@media (max-width: 800px) {
+  html, body {
+    width: 100%;
+    overflow-x: clip;
+  }
+  body { min-width: 320px; }
+  .top { padding: max(12px, env(safe-area-inset-top, 0px)) 4vw 0; }
+  .top-nav { gap: clamp(10px, 2.8vw, 16px); }
+  .top-nav button {
+    min-height: 40px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+  .frame {
+    top: max(7vh, calc(env(safe-area-inset-top, 0px) + 50px));
+    right: 3vw;
+    bottom: max(9vh, calc(env(safe-area-inset-bottom, 0px) + 58px));
+    left: 3vw;
+    border-radius: 18px;
+  }
+  .open-clip span { font-size: clamp(48px, 14vw, 58px); }
+  .player {
+    left: 4vw;
+    right: 4vw;
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    gap: clamp(5px, 1.6vw, 9px);
+    font-size: 10px;
+  }
+  .player button {
+    min-height: 36px;
+    padding: 6px 3px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+  .ruler { gap: clamp(3px, 1vw, 6px); }
+  .ruler button {
+    min-width: 26px;
+    min-height: 36px;
+    font-size: 10px;
+  }
+
+  .hero-card {
+    height: 100vh;
+    height: 100svh;
+    padding: 12px;
+  }
+  .card { border-radius: 18px; }
+  .hero-line { font-size: clamp(56px, 16vw, 76px); }
+  .hero-role {
+    max-width: 90%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 20px;
+    font-size: clamp(13px, 3.5vw, 16px);
+    line-height: 1.35;
+  }
+  #play-reel { min-height: 42px; margin-top: 22px; }
+  .template-tag { font-size: 9px; letter-spacing: 0.08em; }
+
+  .intro { padding: 10svh 6vw 8svh; }
+  .poem {
+    margin-bottom: 6svh;
+    font-size: clamp(30px, 8.2vw, 38px);
+    line-height: 1.18;
+  }
+  .poem img { height: 0.72em; border-radius: 7px; }
+  .about-copy { font-size: 16px; line-height: 1.75; }
+
+  .finder {
+    width: 100%;
+    margin-left: 0;
+    height: 100vh;
+    height: 100svh;
+    min-height: 540px;
+  }
+  .finder-layout {
+    gap: clamp(14px, 2.6vh, 22px);
+    padding: 6svh 0 8svh;
+  }
+  .finder-word { font-size: clamp(42px, 13.5vw, 58px); }
+  .finder-gate { width: 90vw; }
+  .finder-meta {
+    margin: 0 2px 10px;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+
+  .cases { padding: 0 5vw 6svh; }
+  .case {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+    gap: 20px;
+    padding: 5svh 0 8svh;
+  }
+  .case-media {
+    height: min(58svh, 460px);
+    min-height: 260px;
+    border-radius: 18px;
+  }
+  .case-meta h2 { font-size: clamp(40px, 12vw, 54px); }
+  .case-meta p { font-size: 15px; }
+  .date, .see { font-size: 10px; }
+  .see { min-height: 42px; padding: 9px 0; }
+
+  .split-stage {
+    height: 100vh;
+    height: 100svh;
+    min-height: 560px;
+  }
+  .flat-stage {
+    top: max(8vh, calc(env(safe-area-inset-top, 0px) + 48px));
+    bottom: 26svh;
+  }
+  .flat-card { border-radius: 16px; }
+  .flat-meta { bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 10px)); }
+  .flat-cap { font-size: clamp(22px, 6vw, 28px); }
+  .flat-index { font-size: 9px; }
+  .flat-strip {
+    gap: clamp(4px, 1vw, 7px);
+    height: 74px;
+    margin-top: 5px;
+  }
+  .flat-strip button {
+    width: clamp(19px, 5.5vw, 24px);
+    height: 42px;
+    border-radius: 6px;
+  }
+  .flat-strip button.on {
+    width: clamp(28px, 7.5vw, 34px);
+    height: 62px;
+    border-radius: 8px;
+  }
+
+  .record { height: 170svh; }
+  .record-pin { height: 100vh; height: 100svh; }
+  .sheet.is-side { width: 58vw; height: min(40svh, 340px); }
+  .sheet.is-core { width: 42vw; height: min(40svh, 340px); }
+  .sheet-frame { padding: 8px; border-radius: 20px; }
+  .cert-plate, .role-plate { border-radius: 15px; }
+  .role-plate { gap: 14px; padding: 8% 7%; }
+  .role-title { font-size: clamp(28px, 8vw, 38px); }
+  .role-meta { font-size: 9px; letter-spacing: 0.12em; }
+  .role-points li { padding: 0.55em 0; font-size: 12px; }
+
+  .contact {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 10svh 6vw 12svh;
+    gap: 4svh;
+  }
+  .contact-name { font-size: clamp(48px, 13vw, 66px); }
+  .contact-line {
+    font-size: clamp(20px, 5vw, 26px);
+    overflow-wrap: anywhere;
+  }
+  .contact-photo { justify-self: start; max-width: min(72vw, 260px); }
+  .p-nav {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    height: calc(64px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) 16px 0;
+  }
+  .p-nav nav {
+    justify-self: end;
+    min-width: 0;
+    gap: clamp(8px, 2.5vw, 14px);
+  }
+  .p-nav a {
+    font-size: clamp(14px, 4vw, 17px);
+    white-space: nowrap;
+  }
+  .aperture { display: none; }
+}
+
+@media (max-width: 380px) {
+  .p-nav { padding-left: 12px; padding-right: 12px; gap: 8px; }
+  .p-nav nav { gap: 8px; }
+  .p-nav a { font-size: 14px; }
+  .player { gap: 4px; }
+  .ruler button { min-width: 22px; }
+  .hero-line { font-size: 16vw; }
+  .flat-strip { gap: 4px; }
+  .flat-strip button { width: 18px; }
+  .flat-strip button.on { width: 27px; }
+}
+
+@media (max-width: 800px) and (orientation: landscape) {
+  .hero-card { min-height: 440px; }
+  .finder { min-height: 440px; }
+  .split-stage { min-height: 440px; }
+  .flat-stage { top: 7vh; bottom: 25vh; }
+  .record-pin { min-height: 440px; }
+}
+
+/* Desktop-only iPhone responsive preview */
+#device-preview-launcher,
+#device-preview-panel { display: none; }
+
+@media (min-width: 801px) {
+  #device-preview-launcher {
+    position: fixed;
+    z-index: 10000;
+    right: 22px;
+    bottom: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 999px;
+    background: rgba(18,18,18,0.92);
+    color: #fffaf0;
+    font: 11px var(--mono);
+    letter-spacing: 0.08em;
+    box-shadow: 0 10px 34px rgba(0,0,0,0.3);
+    backdrop-filter: blur(14px);
+  }
+  #device-preview-launcher:hover { background: #292723; }
+  #device-preview-panel {
+    position: fixed;
+    z-index: 10001;
+    right: 20px;
+    bottom: 78px;
+    width: min(470px, calc(100vw - 32px));
+    max-height: calc(100vh - 104px);
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 20px;
+    background: rgba(17,17,17,0.97);
+    color: #f4efe6;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.48);
+    backdrop-filter: blur(18px);
+    font-family: var(--sans);
+  }
+  #device-preview-panel.is-open { display: flex; }
+  .device-preview-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .device-preview-heading { display: grid; gap: 3px; }
+  .device-preview-heading strong { font-size: 13px; letter-spacing: 0.04em; }
+  .device-preview-heading span { color: rgba(244,239,230,0.56); font: 9px var(--mono); letter-spacing: 0.1em; }
+  .device-preview-actions { display: flex; gap: 6px; }
+  .device-preview-actions button,
+  .device-preview-presets button {
+    min-height: 32px;
+    padding: 0 9px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    color: #f4efe6;
+    font: 10px var(--mono);
+  }
+  .device-preview-actions button:hover,
+  .device-preview-presets button:hover,
+  .device-preview-presets button.is-active {
+    border-color: rgba(255,238,200,0.7);
+    color: #ffeec8;
+    background: rgba(255,238,200,0.1);
+  }
+  .device-preview-presets { display: flex; gap: 6px; }
+  .device-preview-size {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: rgba(244,239,230,0.78);
+    font: 10px var(--mono);
+  }
+  #device-preview-slider { width: 100%; accent-color: #ffeec8; }
+  #device-preview-stage {
+    position: relative;
+    width: 100%;
+    height: min(64vh, 650px);
+    min-height: 330px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    background:
+      radial-gradient(ellipse at 50% 38%, rgba(255,255,255,0.08), transparent 58%),
+      #090909;
+  }
+  #device-preview-phone {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(var(--device-width, 390px) + 24px);
+    height: calc(var(--device-height, 846px) + 24px);
+    padding: 11px;
+    border: 1px solid #666;
+    border-radius: 54px;
+    background: linear-gradient(145deg, #383838, #080808 30%, #202020 70%, #050505);
+    box-shadow: 0 22px 60px rgba(0,0,0,0.72), inset 0 0 0 2px #111;
+    transform: translate(-50%, -50%) scale(0.68);
+    transform-origin: center center;
+  }
+  #device-preview-frame {
+    display: block;
+    width: var(--device-width, 390px);
+    height: var(--device-height, 846px);
+    max-width: none;
+    border: 0;
+    border-radius: 40px;
+    background: #101010;
+  }
+  .device-preview-island {
+    position: absolute;
+    z-index: 3;
+    top: 17px;
+    left: 50%;
+    width: 92px;
+    height: 24px;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    background: #020202;
+    pointer-events: none;
+  }
+  .device-preview-home {
+    position: absolute;
+    z-index: 3;
+    bottom: 17px;
+    left: 50%;
+    width: 104px;
+    height: 4px;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.9);
+    pointer-events: none;
+  }
+  .device-preview-foot {
+    color: rgba(244,239,230,0.48);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1110,6 +1453,43 @@ body.ui button, body.ui a { cursor: pointer; }
 
 
 
+
+
+
+  <button id="device-preview-launcher" type="button" aria-controls="device-preview-panel" aria-expanded="false">
+    <span aria-hidden="true">▣</span> iPhone 预览
+  </button>
+  <section id="device-preview-panel" aria-label="iPhone 响应式预览">
+    <div class="device-preview-head">
+      <div class="device-preview-heading">
+        <strong>iPhone 响应式预览</strong>
+        <span>LIVE VIEWPORT TEST</span>
+      </div>
+      <div class="device-preview-actions">
+        <button id="device-preview-reload" type="button">刷新</button>
+        <button id="device-preview-close" type="button" aria-label="关闭预览">关闭</button>
+      </div>
+    </div>
+    <div class="device-preview-presets" aria-label="iPhone 尺寸预设">
+      <button type="button" data-device-width="375">小屏 375</button>
+      <button type="button" data-device-width="390" class="is-active">标准 390</button>
+      <button type="button" data-device-width="402">Pro 402</button>
+      <button type="button" data-device-width="430">Max 430</button>
+    </div>
+    <label class="device-preview-size" for="device-preview-slider">
+      <span>屏幕宽度</span>
+      <output id="device-preview-width">390 px</output>
+    </label>
+    <input id="device-preview-slider" type="range" min="320" max="440" step="1" value="390">
+    <div id="device-preview-stage">
+      <div id="device-preview-phone">
+        <iframe id="device-preview-frame" title="作品集 iPhone 尺寸预览" loading="lazy"></iframe>
+        <span class="device-preview-island" aria-hidden="true"></span>
+        <span class="device-preview-home" aria-hidden="true"></span>
+      </div>
+    </div>
+    <div class="device-preview-foot">拖动宽度滑块，检查文字、视频、卡片和导航在不同 iPhone 屏幕上的表现。</div>
+  </section>
 
 
 <script>
@@ -1951,5 +2331,90 @@ runIntroLine();
 space.style.height = ((FILMS.length + 1) * 100) + "vh";
 requestAnimationFrame(tick);
 </script>
+
+<script>
+(function () {
+  const launcher = document.getElementById("device-preview-launcher");
+  const panel = document.getElementById("device-preview-panel");
+  const frame = document.getElementById("device-preview-frame");
+  const phone = document.getElementById("device-preview-phone");
+  const stage = document.getElementById("device-preview-stage");
+  const slider = document.getElementById("device-preview-slider");
+  const widthOutput = document.getElementById("device-preview-width");
+  const closeButton = document.getElementById("device-preview-close");
+  const reloadButton = document.getElementById("device-preview-reload");
+  if (!launcher || !panel || !frame || !phone || !stage || !slider) return;
+
+  const embedded = new URLSearchParams(window.location.search).get("devicePreview") === "1";
+  if (embedded) {
+    launcher.remove();
+    panel.remove();
+    return;
+  }
+
+  let previewLoaded = false;
+  let currentWidth = 390;
+
+  function fitPhone() {
+    const height = Math.round(currentWidth * 2.17);
+    const rect = stage.getBoundingClientRect();
+    const outerWidth = currentWidth + 24;
+    const outerHeight = height + 24;
+    const scale = Math.min(
+      1,
+      Math.max(0.1, (rect.width - 18) / outerWidth),
+      Math.max(0.1, (rect.height - 18) / outerHeight)
+    );
+    phone.style.setProperty("--device-width", currentWidth + "px");
+    phone.style.setProperty("--device-height", height + "px");
+    phone.style.transform = "translate(-50%, -50%) scale(" + scale.toFixed(3) + ")";
+    frame.style.width = currentWidth + "px";
+    frame.style.height = height + "px";
+    widthOutput.textContent = currentWidth + " px";
+  }
+
+  function setWidth(value) {
+    currentWidth = Math.max(320, Math.min(440, Number(value) || 390));
+    slider.value = String(currentWidth);
+    document.querySelectorAll("[data-device-width]").forEach(function (button) {
+      button.classList.toggle("is-active", Number(button.dataset.deviceWidth) === currentWidth);
+    });
+    fitPhone();
+  }
+
+  function openPreview() {
+    panel.classList.add("is-open");
+    launcher.setAttribute("aria-expanded", "true");
+    if (!previewLoaded) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("devicePreview", "1");
+      url.hash = "";
+      frame.src = url.toString();
+      previewLoaded = true;
+    }
+    requestAnimationFrame(fitPhone);
+  }
+
+  function closePreview() {
+    panel.classList.remove("is-open");
+    launcher.setAttribute("aria-expanded", "false");
+  }
+
+  launcher.addEventListener("click", openPreview);
+  closeButton.addEventListener("click", closePreview);
+  reloadButton.addEventListener("click", function () {
+    if (previewLoaded && frame.contentWindow) frame.contentWindow.location.reload();
+  });
+  slider.addEventListener("input", function () { setWidth(slider.value); });
+  document.querySelectorAll("[data-device-width]").forEach(function (button) {
+    button.addEventListener("click", function () { setWidth(button.dataset.deviceWidth); });
+  });
+  window.addEventListener("resize", function () {
+    if (panel.classList.contains("is-open")) fitPhone();
+  });
+  setWidth(390);
+})();
+</script>
+
 </body>
 </html>
