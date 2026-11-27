@@ -77,41 +77,7 @@ body.ui button, body.ui a { cursor: pointer; }
 }
 #preloader.leave { opacity: 0; pointer-events: none; }
 #preloader.need-tap { cursor: pointer; }
-#preload-status {
-  position: relative;
-  z-index: 2;
-  width: min(78vw, 340px);
-  margin-top: 26px;
-  color: rgba(255,251,242,.86);
-  font: 11px/1.5 var(--mono);
-  letter-spacing: .08em;
-  text-align: center;
-}
-#preload-track {
-  height: 2px;
-  width: 100%;
-  margin: 12px 0 8px;
-  overflow: hidden;
-  background: rgba(255,251,242,.18);
-}
-#preload-fill {
-  width: 0%;
-  height: 100%;
-  background: var(--cream);
-  transition: width .18s linear;
-}
-#preload-retry {
-  display: none;
-  margin: 14px auto 0;
-  padding: 9px 16px;
-  border: 1px solid rgba(255,251,242,.55);
-  border-radius: 99px;
-  background: transparent;
-  color: var(--cream);
-  font: inherit;
-  cursor: pointer;
-}
-#preload-retry.show { display: inline-flex; }
+
 #preloader.need-tap .pre-count {
   font-family: var(--sans);
   font-size: 4vw;
@@ -1638,12 +1604,6 @@ body.ui button, body.ui a { cursor: pointer; }
       <path id="pre-stroke" fill="none"></path>
       <g id="pre-streak"></g>
     </svg>
-    <div id="preload-status" aria-live="polite">
-      <div id="preload-label">正在准备全部作品素材</div>
-      <div id="preload-track"><div id="preload-fill"></div></div>
-      <div id="preload-count">0 / 26 · 0%</div>
-      <button id="preload-retry" type="button">重试加载</button>
-    </div>
   </div>
 
 <div id="stage">
@@ -1933,6 +1893,7 @@ function mediaUrl(elId, mime) {
 function loadVideo(video, shouldPlay) {
   if (!video) return;
   var src = video.dataset.src;
+  if (shouldPlay) video.preload = "auto";
   if (shouldPlay && src && video.getAttribute("src") !== src) {
     video.src = src;
     video.load();
@@ -1943,6 +1904,58 @@ function loadVideo(video, shouldPlay) {
     video.pause();
   }
 }
+const MEDIA_IMAGE_PATHS = [
+  "assets/films/posters/01.jpg",
+  "assets/films/posters/02.jpg",
+  "assets/films/posters/03.jpg",
+  "assets/films/portfolio/posters/01.jpg",
+  "assets/films/portfolio/posters/02.jpg",
+  "assets/films/portfolio/posters/03.jpg",
+  "assets/films/portfolio/posters/04.jpg",
+  "assets/films/portfolio/posters/05.jpg",
+  "assets/films/portfolio/posters/06.jpg",
+  "assets/films/portfolio/posters/07.jpg",
+  "assets/films/portfolio/posters/08.jpg",
+  "assets/films/portfolio/posters/09.jpg",
+  "assets/films/plate.jpg"
+];
+const prefetchedVideoPaths = new Set();
+let mediaWorkerPromise = null;
+
+function getMediaWorker() {
+  if (!("serviceWorker" in navigator)) return Promise.resolve(null);
+  if (!mediaWorkerPromise) {
+    mediaWorkerPromise = navigator.serviceWorker.register("./sw.js", { scope: "./" })
+      .then(function () { return navigator.serviceWorker.ready; })
+      .then(function (registration) {
+        return registration.active || navigator.serviceWorker.controller || null;
+      })
+      .catch(function () { return null; });
+  }
+  return mediaWorkerPromise;
+}
+
+function cacheImagesInBackground() {
+  getMediaWorker().then(function (worker) {
+    if (worker) worker.postMessage({ type: "CACHE_IMAGES", paths: MEDIA_IMAGE_PATHS });
+  });
+}
+
+function prefetchVideoInBackground(path) {
+  if (!path || prefetchedVideoPaths.has(path)) return;
+  prefetchedVideoPaths.add(path);
+  const send = function () {
+    getMediaWorker().then(function (worker) {
+      if (worker) worker.postMessage({ type: "PREFETCH_VIDEO", path: path });
+    });
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(send, { timeout: 1200 });
+  } else {
+    window.setTimeout(send, 500);
+  }
+}
+
 function watchVideo(video) {
   if (!video) return;
   video.preload = "none";
@@ -1959,7 +1972,7 @@ function watchVideo(video) {
 }
 // Defer off-screen images and decode them asynchronously.
 document.querySelectorAll("img").forEach(function (img) {
-  if (!img.closest(".hero-card")) img.loading = "lazy";
+  img.loading = "eager";
   img.decoding = "async";
 });
 var posterMap = {};
@@ -2261,6 +2274,10 @@ function applyFlat(animate) {
   flatCap.textContent = splitFilms[front].cap;
   flatThumbs.forEach(function (btn, i) { btn.classList.toggle("on", i === front); });
   syncBg(front);
+  if (wasNear) {
+    const upcoming = splitFilms[modIndex(front + 1)];
+    if (upcoming && upcoming.src) prefetchVideoInBackground(upcoming.src);
+  }
 }
 function updateRing() {
   const box = split.getBoundingClientRect();
@@ -2270,6 +2287,11 @@ function updateRing() {
   flatCards.forEach(function (card) {
     playFlat(card.querySelector("video"), near && Math.abs(card._d) < 0.45);
   });
+  if (near) {
+    const front = modIndex(Math.round(active));
+    const upcoming = splitFilms[modIndex(front + 1)];
+    if (upcoming && upcoming.src) prefetchVideoInBackground(upcoming.src);
+  }
   playFlat(bgA, near && bgA.classList.contains("on"));
   playFlat(bgB, near && bgB.classList.contains("on"));
 }
@@ -2369,7 +2391,7 @@ splitFilms.forEach(function (film, index) {
     const img = document.createElement("img");
     img.src = film.poster;
     img.alt = "";
-    img.loading = "lazy";
+    img.loading = "eager";
     img.decoding = "async";
     btn.appendChild(img);
   } else {
@@ -2561,7 +2583,10 @@ function render(p) {
     nextEl = currentEl === vidA ? vidB : vidA;
   }
   bind(currentEl, film);
-  if (next !== index && fade > 0.02) bind(nextEl, upcoming);
+  if (next !== index && local > 0.15) {
+    bind(nextEl, upcoming);
+    prefetchVideoInBackground(upcoming.src);
+  }
   loadVideo(currentEl, wantPlay);
   if (next !== index && fade > 0.02) loadVideo(nextEl, wantPlay);
   else if (nextEl !== currentEl) loadVideo(nextEl, false);
@@ -2647,6 +2672,7 @@ function finishIntro() {
   introOn = false;
   bind(vidA, FILMS[0]);
   loadVideo(vidA, wantPlay);
+  prefetchVideoInBackground(FILMS[1] && FILMS[1].src);
   pre.classList.add("opening");
   stage.classList.add("grown");
   setTimeout(() => pre.remove(), 460);
@@ -2762,89 +2788,8 @@ function runIntroLine() {
   }
   requestAnimationFrame(frame);
 }
-async function prepareAllMedia() {
-  const label = document.getElementById("preload-label");
-  const count = document.getElementById("preload-count");
-  const fill = document.getElementById("preload-fill");
-  const retry = document.getElementById("preload-retry");
-  const status = document.getElementById("preload-status");
-  const totalBytes = 90537798;
-  let finished = false;
-
-  function setProgress(data) {
-    const pct = Math.max(0, Math.min(100, Math.round((data.loadedBytes || 0) / (data.totalBytes || totalBytes) * 100)));
-    fill.style.width = pct + "%";
-    count.textContent = (data.done || 0) + " / 26 · " + pct + "%";
-    if (data.current) label.textContent = "正在缓存 " + data.current.split("/").pop();
-    if (data.type === "complete") {
-      finished = true;
-      fill.style.width = "100%";
-      count.textContent = "26 / 26 · 100%";
-      label.textContent = "全部素材已准备完成";
-    }
-  }
-
-  function showError(message) {
-    label.textContent = "素材加载失败，请检查网络后重试";
-    count.textContent = message || "部分素材暂时无法下载";
-    retry.classList.add("show");
-  }
-
-  async function start() {
-    retry.classList.remove("show");
-    label.textContent = "正在准备全部作品素材";
-    count.textContent = "正在连接缓存服务…";
-    fill.style.width = "0%";
-    finished = false;
-
-    if (!("serviceWorker" in navigator) || !("caches" in window)) {
-      showError("当前浏览器不支持完整离线缓存，请使用最新版 Safari 或 Chrome");
-      return;
-    }
-
-    try {
-      if (navigator.storage && navigator.storage.estimate) {
-        const estimate = await navigator.storage.estimate();
-        const available = (estimate.quota || Infinity) - (estimate.usage || 0);
-        if (available < totalBytes * 1.15) {
-          showError("设备可用缓存空间不足，请清理空间后重试");
-          return;
-        }
-      }
-
-      const registration = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-      await navigator.serviceWorker.ready;
-      const worker = registration.active || navigator.serviceWorker.controller;
-      if (!worker) throw new Error("缓存服务尚未启动，请刷新后重试");
-
-      const onMessage = function (event) {
-        const data = event.data || {};
-        if (data.type === "progress" || data.type === "complete") setProgress(data);
-        if (data.type === "error") showError(data.message);
-      };
-      navigator.serviceWorker.addEventListener("message", onMessage);
-      worker.postMessage({ type: "PRELOAD_ALL" });
-
-      const check = setInterval(function () {
-        if (finished) {
-          clearInterval(check);
-          navigator.serviceWorker.removeEventListener("message", onMessage);
-          retry.classList.remove("show");
-          setTimeout(function () {
-            status.style.opacity = "0";
-            runIntroLine();
-          }, 350);
-        }
-      }, 250);
-    } catch (error) {
-      showError(error && error.message ? error.message : "缓存服务启动失败");
-    }
-  }
-
-  retry.addEventListener("click", start);
-  await start();
-}
-prepareAllMedia();
+cacheImagesInBackground();
+runIntroLine();
 
 space.style.height = ((FILMS.length + 1) * 100) + "vh";
 requestAnimationFrame(tick);
