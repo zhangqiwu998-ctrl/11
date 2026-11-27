@@ -2,79 +2,9 @@
 
 const CACHE_NAME = "fogfire-media-v4";
 const MEDIA_ROOT = new URL("assets/films/", self.registration.scope);
-const pending = new Map();
 
 function isPortfolioMedia(url) {
   return url.origin === MEDIA_ROOT.origin && url.pathname.startsWith(MEDIA_ROOT.pathname);
-}
-
-function resolveMediaUrl(path) {
-  const url = new URL(path, self.registration.scope);
-  if (!isPortfolioMedia(url)) throw new Error("拒绝缓存非作品集媒体地址");
-  return url;
-}
-
-function notify(client, payload) {
-  if (!client) return;
-  try { client.postMessage(payload); } catch (error) {}
-}
-
-async function cacheOne(path) {
-  const url = resolveMediaUrl(path);
-  const cache = await caches.open(CACHE_NAME);
-  const existing = await cache.match(url.href);
-  if (existing) return "cached";
-
-  if (pending.has(url.href)) {
-    await pending.get(url.href);
-    return "cached";
-  }
-
-  const task = (async function () {
-    const response = await fetch(url.href, { cache: "default", priority: "low" });
-    if (!response.ok || response.status !== 200) {
-      throw new Error("HTTP " + response.status + " · " + path);
-    }
-    await cache.put(url.href, response.clone());
-    return "downloaded";
-  })();
-
-  pending.set(url.href, task);
-  try {
-    return await task;
-  } finally {
-    pending.delete(url.href);
-  }
-}
-
-async function cachePaths(paths, client, concurrency) {
-  const queue = Array.from(new Set((paths || []).filter(path => typeof path === "string")));
-  let cursor = 0;
-  let done = 0;
-  const total = queue.length;
-
-  async function worker() {
-    while (cursor < queue.length) {
-      const path = queue[cursor++];
-      try {
-        const result = await cacheOne(path);
-        done += 1;
-        notify(client, { type: "MEDIA_CACHE_PROGRESS", path, result, done, total });
-      } catch (error) {
-        done += 1;
-        notify(client, {
-          type: "MEDIA_CACHE_ERROR",
-          path,
-          message: error && error.message ? error.message : "媒体缓存失败",
-          done,
-          total
-        });
-      }
-    }
-  }
-
-  const count = Math.max(1, Math.min(concurrency || 1, queue.length || 1));
-  await Promise.all(Array.from({ length: count }, worker));
 }
 
 async function makeRangeResponse(cached, rangeHeader) {
@@ -123,15 +53,6 @@ self.addEventListener("activate", event => {
       .map(key => caches.delete(key)));
     await self.clients.claim();
   })());
-});
-
-self.addEventListener("message", event => {
-  const data = event.data || {};
-  if (data.type === "CACHE_IMAGES") {
-    event.waitUntil(cachePaths(data.paths, event.source, 2));
-  } else if (data.type === "PREFETCH_VIDEO") {
-    event.waitUntil(cachePaths([data.path], event.source, 1));
-  }
 });
 
 self.addEventListener("fetch", event => {

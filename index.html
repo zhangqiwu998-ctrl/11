@@ -2085,88 +2085,130 @@ function mediaUrl(elId, mime) {
   return media[elId] || "";
 }
 
-// Load video files only when their visual section is close to the viewport.
-function loadVideo(video, shouldPlay) {
+// One native look-ahead element, reused directly when it becomes visible.
+let lookahead = null;
+let speculativeVideo = null;
+const lookaheadEvents = ["playing", "progress", "timeupdate", "canplay", "waiting", "seeking"];
+const playRequests = new WeakMap();
+
+function bufferedAhead(video) {
+  const time = video.currentTime;
+  for (let i = 0; i < video.buffered.length; i += 1) {
+    if (video.buffered.start(i) <= time + 0.05 && video.buffered.end(i) >= time) {
+      return Math.max(0, video.buffered.end(i) - time);
+    }
+  }
+  return 0;
+}
+
+function releaseSource(video) {
   if (!video) return;
-  var src = video.dataset.src;
-  if (shouldPlay) video.preload = "auto";
-  if (shouldPlay && src && video.getAttribute("src") !== src) {
-    video.src = src;
+  if (speculativeVideo === video) speculativeVideo = null;
+  video.dataset.playWanted = "false";
+  playRequests.delete(video);
+  video.pause();
+  video.preload = "none";
+  if (video.hasAttribute("src")) {
+    video.removeAttribute("src");
     video.load();
   }
-  if (shouldPlay) {
-    if (video.paused) {
-      video.play().then(function () {
-        delete video.dataset.playBlocked;
-      }).catch(function (error) {
-        if (error && error.name === "NotAllowedError" &&
-            (video.id === "vid-a" || video.id === "vid-b")) {
-          video.dataset.playBlocked = "true";
-          const toggle = document.getElementById("play-toggle");
-          if (toggle) toggle.textContent = "播放";
-        }
-      });
+}
+
+function stopSpeculation() {
+  const video = speculativeVideo;
+  speculativeVideo = null;
+  if (video && video.dataset.playWanted !== "true") releaseSource(video);
+}
+
+function reconsiderLookahead() {
+  if (!lookahead || document.hidden) {
+    stopSpeculation();
+    return;
+  }
+  const current = lookahead.current;
+  const next = lookahead.next;
+  if (!current || !next || !next.dataset.src || current === next ||
+      current.paused || current.dataset.playWanted !== "true" ||
+      next.dataset.playWanted === "true") {
+    stopSpeculation();
+    return;
+  }
+  const ahead = bufferedAhead(current);
+  if (current.seeking || current.readyState < 3 || ahead < 0.5) {
+    stopSpeculation();
+    return;
+  }
+  const remaining = Number.isFinite(current.duration) ? Math.max(0, current.duration - current.currentTime) : 3;
+  if (ahead + 0.1 < Math.min(3, remaining)) return;
+  if (speculativeVideo === next) return;
+  stopSpeculation();
+  speculativeVideo = next;
+  next.preload = "auto";
+  if (next.getAttribute("src") !== next.dataset.src) next.src = next.dataset.src;
+}
+
+function setMediaLookahead(owner, current, next) {
+  if (!current || !next || current === next) {
+    if (!lookahead || lookahead.owner !== owner) return;
+    lookaheadEvents.forEach(function (name) { lookahead.current.removeEventListener(name, reconsiderLookahead); });
+    lookahead = null;
+    stopSpeculation();
+    return;
+  }
+  if (lookahead && lookahead.owner === owner && lookahead.current === current && lookahead.next === next) {
+    reconsiderLookahead();
+    return;
+  }
+  if (lookahead) lookaheadEvents.forEach(function (name) {
+    lookahead.current.removeEventListener(name, reconsiderLookahead);
+  });
+  if (speculativeVideo && speculativeVideo !== next) stopSpeculation();
+  lookahead = { owner: owner, current: current, next: next };
+  lookaheadEvents.forEach(function (name) { current.addEventListener(name, reconsiderLookahead); });
+  reconsiderLookahead();
+}
+
+function loadVideo(video, shouldPlay) {
+  if (!video) return;
+  video.dataset.playWanted = shouldPlay ? "true" : "false";
+  if (!shouldPlay) {
+    if (!video.paused) video.pause();
+    if (speculativeVideo !== video) video.preload = "none";
+    return;
+  }
+  // Promote preloaded media without resetting its source or buffer.
+  if (speculativeVideo === video) speculativeVideo = null;
+  const src = video.dataset.src;
+  if (!src) return;
+  video.preload = "auto";
+  if (video.getAttribute("src") !== src) {
+    playRequests.delete(video);
+    delete video.dataset.playBlocked;
+    video.src = src;
+  }
+  if (!video.paused || playRequests.has(video) || video.dataset.playBlocked === "true") return;
+  const request = video.play();
+  if (!request || typeof request.then !== "function") return;
+  playRequests.set(video, request);
+  request.then(function () {
+    if (playRequests.get(video) !== request) return;
+    playRequests.delete(video);
+    delete video.dataset.playBlocked;
+  }).catch(function (error) {
+    if (playRequests.get(video) !== request) return;
+    playRequests.delete(video);
+    if (error && error.name === "NotAllowedError" &&
+        (video.id === "vid-a" || video.id === "vid-b")) {
+      video.dataset.playBlocked = "true";
+      const toggle = document.getElementById("play-toggle");
+      if (toggle) toggle.textContent = "播放";
     }
-  } else if (!video.paused) {
-    video.pause();
-  }
-}
-const MEDIA_IMAGE_PATHS = [
-  "assets/films/posters/01.jpg",
-  "assets/films/posters/02.jpg",
-  "assets/films/posters/03.jpg",
-  "assets/films/portfolio/posters/01.jpg",
-  "assets/films/portfolio/posters/02.jpg",
-  "assets/films/portfolio/posters/03.jpg",
-  "assets/films/portfolio/posters/04.jpg",
-  "assets/films/portfolio/posters/05.jpg",
-  "assets/films/portfolio/posters/06.jpg",
-  "assets/films/portfolio/posters/07.jpg",
-  "assets/films/portfolio/posters/08.jpg",
-  "assets/films/portfolio/posters/09.jpg",
-  "assets/films/plate.jpg"
-];
-const prefetchedVideoPaths = new Set();
-let mediaWorkerPromise = null;
-let startupReady = false;
-const deferredVideoPaths = new Set();
-
-function getMediaWorker() {
-  if (!("serviceWorker" in navigator)) return Promise.resolve(null);
-  if (!mediaWorkerPromise) {
-    mediaWorkerPromise = navigator.serviceWorker.register("./sw.js", { scope: "./" })
-      .then(function () { return navigator.serviceWorker.ready; })
-      .then(function (registration) {
-        return registration.active || navigator.serviceWorker.controller || null;
-      })
-      .catch(function () { return null; });
-  }
-  return mediaWorkerPromise;
-}
-
-function cacheImagesInBackground() {
-  getMediaWorker().then(function (worker) {
-    if (worker) worker.postMessage({ type: "CACHE_IMAGES", paths: MEDIA_IMAGE_PATHS });
   });
 }
 
-function prefetchVideoInBackground(path) {
-  if (!path || prefetchedVideoPaths.has(path)) return;
-  if (!startupReady) {
-    deferredVideoPaths.add(path);
-    return;
-  }
-  prefetchedVideoPaths.add(path);
-  const send = function () {
-    getMediaWorker().then(function (worker) {
-      if (worker) worker.postMessage({ type: "PREFETCH_VIDEO", path: path });
-    });
-  };
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(send, { timeout: 1200 });
-  } else {
-    window.setTimeout(send, 500);
-  }
+function getMediaWorker() {
+  if (!("serviceWorker" in navigator)) return Promise.resolve(null);
+  return navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(function () { return null; });
 }
 
 function watchVideo(video) {
@@ -2185,7 +2227,7 @@ function watchVideo(video) {
 }
 // Keep non-critical images below the reel low priority.
 document.querySelectorAll("img").forEach(function (img) {
-  img.loading = "eager";
+  img.loading = "lazy";
   img.fetchPriority = "low";
   img.decoding = "async";
 });
@@ -2253,9 +2295,8 @@ function updateReelTime(event) {
 });
 function bind(video, film) {
   if (video.dataset.id === film.id) return;
-  video.pause();
-  video.removeAttribute("src");
-  video.load();
+  releaseSource(video);
+  delete video.dataset.playBlocked;
   video.dataset.id = film.id;
   video.dataset.src = film.src;
   video.poster = film.poster;
@@ -2266,19 +2307,6 @@ function bind(video, film) {
 let firstRetryUsed = false;
 let firstStallTimer = 0;
 let lastFirstProgress = performance.now();
-
-function releaseStartupMedia(video) {
-  if (startupReady || video.paused || video.readyState < 2) return;
-  startupReady = true;
-  const currentIndex = FILMS.findIndex(function (film) { return film.id === video.dataset.id; });
-  const nextFilm = FILMS[currentIndex + 1];
-  window.setTimeout(function () {
-    if (nextFilm) prefetchVideoInBackground(nextFilm.src);
-    deferredVideoPaths.forEach(function (path) { prefetchVideoInBackground(path); });
-    deferredVideoPaths.clear();
-  }, 900);
-  window.setTimeout(cacheImagesInBackground, 2400);
-}
 
 function retryFirstVideo() {
   if (firstRetryUsed || !wantPlay || document.hidden ||
@@ -2305,13 +2333,13 @@ vidA.addEventListener("stalled", watchFirstStall);
     delete video.dataset.playBlocked;
     if (wantPlay) playToggle.textContent = "暂停";
     if (video === vidA) window.clearTimeout(firstStallTimer);
-    releaseStartupMedia(video);
+    reconsiderLookahead();
   });
 });
 bind(vidA, FILMS[0]);
 loadVideo(vidA, wantPlay);
 watchFirstStall();
-// Register the worker early, but do not start bulk downloads yet.
+// Register once; cache only resources the browser actually requests.
 getMediaWorker();
 
 function filmTravel() {
@@ -2344,6 +2372,7 @@ PROFILE.poem.forEach((word, i) => {
   poem.appendChild(span);
   if (PROFILE.poemStills[i]) {
     const img = document.createElement("img");
+    img.loading = "lazy";
     img.fetchPriority = "low";
     img.decoding = "async";
     img.src = PROFILE.poemStills[i];
@@ -2364,7 +2393,7 @@ CASES.forEach((film) => {
     const finder = document.createElement("article");
     finder.className = film.id === "02" ? "finder finder-red-sail" : "finder";
     finder.innerHTML =
-      '<img class="finder-film" alt="" loading="eager" fetchpriority="low" decoding="async">' +
+      '<img class="finder-film" alt="" loading="lazy" fetchpriority="low" decoding="async">' +
       '<div class="finder-layout">' +
         '<p class="finder-word above"></p>' +
         '<div class="finder-gate">' +
@@ -2482,12 +2511,10 @@ function bindFilm(video, film) {
     return;
   }
   if (video.getAttribute("data-cap") === film.cap) return;
-  video.pause();
-  video.removeAttribute("src");
-  video.load();
+  releaseSource(video);
   video.setAttribute("data-cap", film.cap);
   video.dataset.src = film.src;
-  video.poster = film.poster;
+  // The separate card poster already provides the fallback image.
   video.preload = "none";
 }
 function syncBg(index) {
@@ -2563,12 +2590,12 @@ function applyFlat(animate) {
   }
   flatCap.textContent = splitFilms[front].cap;
   flatThumbs.forEach(function (btn, i) { btn.classList.toggle("on", i === front); });
-  if (!dragging) {
+  if (!dragging && wasNear) {
     syncBg(front);
-    if (wasNear) {
-      const upcoming = splitFilms[modIndex(front + 1)];
-      if (upcoming && upcoming.src) prefetchVideoInBackground(upcoming.src);
-    }
+    setMediaLookahead("ring", flatCards[front].querySelector("video"),
+      flatCards[modIndex(front + 1)].querySelector("video"));
+  } else {
+    setMediaLookahead("ring", null, null);
   }
 }
 function updateRing() {
@@ -2581,10 +2608,13 @@ function updateRing() {
   });
   if (near) {
     const front = modIndex(Math.round(active));
-    const upcoming = splitFilms[modIndex(front + 1)];
-    if (upcoming && upcoming.src) prefetchVideoInBackground(upcoming.src);
+    syncBg(front);
+    setMediaLookahead("ring", flatCards[front].querySelector("video"),
+      flatCards[modIndex(front + 1)].querySelector("video"));
+  } else {
+    setMediaLookahead("ring", null, null);
+    flatCards.forEach(function (card) { releaseSource(card.querySelector("video")); });
   }
-
 }
 
 splitFilms.forEach(function (film, index) {
@@ -2594,7 +2624,7 @@ splitFilms.forEach(function (film, index) {
     const poster = document.createElement("img");
     poster.className = "flat-card-poster";
     poster.alt = "";
-    poster.loading = "eager";
+    poster.loading = "lazy";
     poster.fetchPriority = "low";
     poster.decoding = "async";
     poster.src = film.poster;
@@ -2610,6 +2640,9 @@ splitFilms.forEach(function (film, index) {
       card.classList.add("video-ready");
     });
     video.addEventListener("error", function () {
+      card.classList.remove("video-ready");
+    });
+    video.addEventListener("emptied", function () {
       card.classList.remove("video-ready");
     });
     video.addEventListener("ended", function () {
@@ -2695,7 +2728,7 @@ splitFilms.forEach(function (film, index) {
   if (film.poster) {
     const img = document.createElement("img");
     img.alt = "";
-    img.loading = "eager";
+    img.loading = "lazy";
     img.fetchPriority = "low";
     img.decoding = "async";
     img.src = film.poster;
@@ -2852,6 +2885,8 @@ playToggle.addEventListener("click", () => {
     loadVideo(video, wantPlay && (video === activeTimeVideo || Number(video.style.opacity || 0) > 0.02));
   });
   playToggle.textContent = wantPlay ? "暂停" : "播放";
+  if (!wantPlay) setMediaLookahead("reel", null, null);
+  scheduleTick();
 });
 muteToggle.addEventListener("click", () => {
   wantSound = !wantSound;
@@ -2891,6 +2926,8 @@ function render(p) {
     stage.style.setProperty("--mobile-film-poster", 'url("' + film.poster + '")');
   }
   const upcoming = FILMS[next];
+  const cover = 1 - clamp(portrait.getBoundingClientRect().top / window.innerHeight, 0, 1);
+  const reelVisible = cover <= 0.98;
   let currentEl = [vidA, vidB].find((v) => v.dataset.id === film.id) || null;
   let nextEl;
   if (!currentEl) {
@@ -2899,14 +2936,27 @@ function render(p) {
   } else {
     nextEl = currentEl === vidA ? vidB : vidA;
   }
-  bind(currentEl, film);
-  if (next !== index && local > 0.15) {
-    bind(nextEl, upcoming);
-    prefetchVideoInBackground(upcoming.src);
+  if (reelVisible) {
+    bind(currentEl, film);
+    loadVideo(currentEl, wantPlay);
+    if (next !== index && wantPlay) {
+      bind(nextEl, upcoming);
+      if (fade > 0.02) {
+        loadVideo(nextEl, true);
+        setMediaLookahead("reel", null, null);
+      } else {
+        loadVideo(nextEl, false);
+        setMediaLookahead("reel", currentEl, nextEl);
+      }
+    } else {
+      loadVideo(nextEl, false);
+      setMediaLookahead("reel", null, null);
+    }
+  } else {
+    setMediaLookahead("reel", null, null);
+    releaseSource(vidA);
+    releaseSource(vidB);
   }
-  loadVideo(currentEl, wantPlay);
-  if (next !== index && fade > 0.02) loadVideo(nextEl, wantPlay);
-  else if (nextEl !== currentEl) loadVideo(nextEl, false);
   const zoom = 1 + local * 0.14;
   currentEl.style.opacity = String(1 - fade);
   nextEl.style.opacity = String(next === index ? 0 : fade);
@@ -2951,7 +3001,6 @@ function render(p) {
     loadVideo(video, near);
   });
 
-  const cover = 1 - clamp(portrait.getBoundingClientRect().top / window.innerHeight, 0, 1);
   stage.style.opacity = String(1 - cover);
   stage.classList.toggle("gone", cover > 0.98);
   frame.style.pointerEvents = cover > 0.08 ? "none" : "auto";
@@ -2978,7 +3027,8 @@ window.addEventListener("scroll", scheduleTick, { passive: true });
 window.addEventListener("resize", scheduleTick, { passive: true });
 document.addEventListener("visibilitychange", function () {
   if (document.hidden) {
-    document.querySelectorAll("video").forEach(function (video) { video.pause(); });
+    stopSpeculation();
+    document.querySelectorAll("video").forEach(function (video) { loadVideo(video, false); });
   } else {
     wasNear = false;
     scheduleTick();
@@ -3003,7 +3053,7 @@ function finishIntro() {
   introOn = false;
   bind(vidA, FILMS[0]);
   loadVideo(vidA, wantPlay);
-  if (!vidA.paused && vidA.readyState >= 2) releaseStartupMedia(vidA);
+  reconsiderLookahead();
   pre.classList.add("opening");
   stage.classList.add("grown");
   setTimeout(() => pre.remove(), 460);
