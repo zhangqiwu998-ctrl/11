@@ -1,0 +1,142 @@
+{
+  "source": "AI短剧作品集.html",
+  "method": "Extracted embedded MP4/JPEG assets; retained original HTML/CSS/JS and visual structure; replaced data-URI blob decoder with relative asset paths.",
+  "assets": {
+    "v01": {
+      "path": "assets/films/01.mp4",
+      "bytes": 10559520,
+      "sha256": "6ffc6008816eb825"
+    },
+    "p01": {
+      "path": "assets/films/posters/01.jpg",
+      "bytes": 127725,
+      "sha256": "4546d0178bcc780d"
+    },
+    "v02": {
+      "path": "assets/films/02.mp4",
+      "bytes": 9483485,
+      "sha256": "100966ea33e691fd"
+    },
+    "p02": {
+      "path": "assets/films/posters/02.jpg",
+      "bytes": 152949,
+      "sha256": "e3787e114b38cca1"
+    },
+    "v03": {
+      "path": "assets/films/03.mp4",
+      "bytes": 5949464,
+      "sha256": "b25dd5157712ef2a"
+    },
+    "p03": {
+      "path": "assets/films/posters/03.jpg",
+      "bytes": 89026,
+      "sha256": "ed7e11733c796d93"
+    },
+    "vp1": {
+      "path": "assets/films/portfolio/01.mp4",
+      "bytes": 5000168,
+      "sha256": "d91df602c9cc309f"
+    },
+    "pp1": {
+      "path": "assets/films/portfolio/posters/01.jpg",
+      "bytes": 45385,
+      "sha256": "5976020b4b1cfff0"
+    },
+    "vp2": {
+      "path": "assets/films/portfolio/02.mp4",
+      "bytes": 6011776,
+      "sha256": "b60a8ca3c674d024"
+    },
+    "pp2": {
+      "path": "assets/films/portfolio/posters/02.jpg",
+      "bytes": 41158,
+      "sha256": "2c885bb9bfbd487a"
+    },
+    "vp3": {
+      "path": "assets/films/portfolio/03.mp4",
+      "bytes": 5883129,
+      "sha256": "c274fa6aba00afbd"
+    },
+    "pp3": {
+      "path": "assets/films/portfolio/posters/03.jpg",
+      "bytes": 33555,
+      "sha256": "a266c0360a4d5f29"
+    },
+    "vp4": {
+      "path": "assets/films/portfolio/04.mp4",
+      "bytes": 5928572,
+      "sha256": "a49b9f6a73532326"
+    },
+    "pp4": {
+      "path": "assets/films/portfolio/posters/04.jpg",
+      "bytes": 40110,
+      "sha256": "27b1172e5f902fc4"
+    },
+    "vp5": {
+      "path": "assets/films/portfolio/05.mp4",
+      "bytes": 4310478,
+      "sha256": "20dfa2a46b2d8c81"
+    },
+    "pp5": {
+      "path": "assets/films/portfolio/posters/05.jpg",
+      "bytes": 55442,
+      "sha256": "19ed53ec68c800f8"
+    },
+    "vp6": {
+      "path": "assets/films/portfolio/06.mp4",
+      "bytes": 6885163,
+      "sha256": "cc402d3592c72aa4"
+    },
+    "pp6": {
+      "path": "assets/films/portfolio/posters/06.jpg",
+      "bytes": 57770,
+      "sha256": "eef2b0bb20cd7908"
+    },
+    "vp7": {
+      "path": "assets/films/portfolio/07.mp4",
+      "bytes": 2958556,
+      "sha256": "9bb38a07d90d8c89"
+    },
+    "pp7": {
+      "path": "assets/films/portfolio/posters/07.jpg",
+      "bytes": 75048,
+      "sha256": "5f38df7ff8a89645"
+    },
+    "vp8": {
+      "path": "assets/films/portfolio/08.mp4",
+      "bytes": 3293628,
+      "sha256": "58526feff1e71ea0"
+    },
+    "pp8": {
+      "path": "assets/films/portfolio/posters/08.jpg",
+      "bytes": 82309,
+      "sha256": "8779267ceeb7fb99"
+    },
+    "vp9": {
+      "path": "assets/films/portfolio/09.mp4",
+      "bytes": 4417260,
+      "sha256": "09dcbffad21e6bfe"
+    },
+    "pp9": {
+      "path": "assets/films/portfolio/posters/09.jpg",
+      "bytes": 63399,
+      "sha256": "9261885e3bf129b5"
+    },
+    "platev": {
+      "path": "assets/films/plate.mp4",
+      "bytes": 18895441,
+      "sha256": "ac06b4641b6f0e34"
+    },
+    "platep": {
+      "path": "assets/films/plate.jpg",
+      "bytes": 97282,
+      "sha256": "c99c11111638121e"
+    }
+  },
+  "totals": {
+    "asset_count": 26,
+    "video_count": 12,
+    "image_count": 14,
+    "asset_bytes": 90537798
+  }
+}
