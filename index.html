@@ -1184,7 +1184,7 @@ body.ui button, body.ui a { cursor: pointer; }
   .record-pin { min-height: 440px; }
 }
 
-/* Desktop-only iPhone responsive preview */
+/* Desktop-only responsive device workbench */
 #device-preview-launcher,
 #device-preview-panel { display: none; }
 
@@ -1196,113 +1196,275 @@ body.ui button, body.ui a { cursor: pointer; }
     bottom: 22px;
     display: inline-flex;
     align-items: center;
-    gap: 9px;
-    min-height: 44px;
-    padding: 0 16px;
-    border: 1px solid rgba(255,255,255,0.22);
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 18px;
+    border: 1px solid rgba(255,255,255,.22);
     border-radius: 999px;
-    background: rgba(18,18,18,0.92);
+    background: rgba(18,18,18,.94);
     color: #fffaf0;
     font: 11px var(--mono);
-    letter-spacing: 0.08em;
-    box-shadow: 0 10px 34px rgba(0,0,0,0.3);
+    letter-spacing: .08em;
+    box-shadow: 0 10px 34px rgba(0,0,0,.32);
     backdrop-filter: blur(14px);
+    cursor: pointer;
   }
   #device-preview-launcher:hover { background: #292723; }
+
   #device-preview-panel {
     position: fixed;
     z-index: 10001;
-    right: 20px;
-    bottom: 78px;
-    width: min(470px, calc(100vw - 32px));
-    max-height: calc(100vh - 104px);
+    inset: 16px;
     display: none;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px;
-    border: 1px solid rgba(255,255,255,0.16);
+    gap: 0;
+    width: auto;
+    height: auto;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.14);
     border-radius: 20px;
-    background: rgba(17,17,17,0.97);
+    background: #111214;
     color: #f4efe6;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.48);
-    backdrop-filter: blur(18px);
+    box-shadow: 0 26px 90px rgba(0,0,0,.58);
     font-family: var(--sans);
   }
   #device-preview-panel.is-open { display: flex; }
-  .device-preview-head {
+  .device-workbench-head {
+    min-height: 62px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 18px;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.025);
   }
-  .device-preview-heading { display: grid; gap: 3px; }
-  .device-preview-heading strong { font-size: 13px; letter-spacing: 0.04em; }
-  .device-preview-heading span { color: rgba(244,239,230,0.56); font: 9px var(--mono); letter-spacing: 0.1em; }
-  .device-preview-actions { display: flex; gap: 6px; }
-  .device-preview-actions button,
-  .device-preview-presets button {
-    min-height: 32px;
-    padding: 0 9px;
-    border: 1px solid rgba(255,255,255,0.16);
+  .device-workbench-title { display: grid; gap: 4px; }
+  .device-workbench-title strong { font-size: 14px; letter-spacing: .04em; }
+  .device-workbench-title span { color: rgba(244,239,230,.48); font: 9px var(--mono); letter-spacing: .14em; }
+  .device-workbench-actions { display: flex; align-items: center; gap: 7px; }
+  .device-workbench-actions button,
+  .device-control button,
+  .device-control select {
+    min-height: 34px;
+    padding: 0 11px;
+    border: 1px solid rgba(255,255,255,.15);
     border-radius: 8px;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,.055);
     color: #f4efe6;
     font: 10px var(--mono);
+    cursor: pointer;
   }
-  .device-preview-actions button:hover,
-  .device-preview-presets button:hover,
-  .device-preview-presets button.is-active {
-    border-color: rgba(255,238,200,0.7);
+  .device-workbench-actions button:hover,
+  .device-control button:hover,
+  .device-control select:hover,
+  .device-control button.is-active {
+    border-color: rgba(255,238,200,.66);
     color: #ffeec8;
-    background: rgba(255,238,200,0.1);
+    background: rgba(255,238,200,.09);
   }
-  .device-preview-presets { display: flex; gap: 6px; }
-  .device-preview-size {
+  .device-workbench-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .device-workbench-sidebar {
+    width: 304px;
+    min-width: 280px;
+    max-width: 340px;
+    flex: 0 0 304px;
+    overflow-y: auto;
+    padding: 16px;
+    border-right: 1px solid rgba(255,255,255,.1);
+    background: #17181a;
+    scrollbar-width: thin;
+    scrollbar-color: #4b4b4b transparent;
+  }
+  .device-control {
+    display: grid;
+    gap: 10px;
+    padding: 0 0 16px;
+    margin: 0 0 15px;
+    border-bottom: 1px solid rgba(255,255,255,.09);
+  }
+  .device-control:last-child { border-bottom: 0; }
+  .device-control h3 {
+    margin: 0;
+    color: rgba(244,239,230,.9);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+  }
+  .device-control-note {
+    color: rgba(244,239,230,.42);
+    font-size: 9px;
+    line-height: 1.5;
+  }
+  .device-preset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .device-preset-grid button { text-align: left; }
+  .device-preset-grid button span {
+    display: block;
+    margin-top: 3px;
+    color: rgba(244,239,230,.45);
+    font: 9px var(--mono);
+  }
+  .device-size-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .device-size-field { display: grid; gap: 5px; }
+  .device-size-field label,
+  .device-range-label {
+    color: rgba(244,239,230,.62);
+    font: 9px var(--mono);
+    letter-spacing: .08em;
+  }
+  .device-size-field input {
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0 8px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 7px;
+    outline: 0;
+    background: #0e0f10;
+    color: #fffaf0;
+    font: 12px var(--mono);
+  }
+  .device-size-field input:focus { border-color: #d6c49a; }
+  .device-range-wrap { display: grid; gap: 5px; }
+  .device-range-label { display: flex; justify-content: space-between; }
+  .device-control input[type="range"] { width: 100%; accent-color: #d8c59a; }
+  .device-check-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    color: rgba(244,239,230,0.78);
-    font: 10px var(--mono);
+    gap: 8px;
+    color: rgba(244,239,230,.8);
+    font-size: 10px;
+    cursor: pointer;
   }
-  #device-preview-slider { width: 100%; accent-color: #ffeec8; }
-  #device-preview-stage {
+  .device-check-row input { accent-color: #d8c59a; }
+  .device-control-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .device-control-row > button { flex: 1; }
+  #device-preview-custom-select { width: 100%; background: #0e0f10; }
+  #device-preview-inspector-details,
+  #device-preview-overflow-result {
+    min-height: 34px;
+    padding: 9px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px;
+    background: rgba(0,0,0,.2);
+    color: rgba(244,239,230,.72);
+    font: 9px/1.55 var(--mono);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  #device-preview-overflow-result.is-warning { color: #ffd28a; border-color: rgba(255,180,80,.3); }
+  #device-preview-overflow-result.is-good { color: #a7d9b0; border-color: rgba(120,210,150,.24); }
+
+  .device-workbench-workspace {
     position: relative;
-    width: 100%;
-    height: min(64vh, 650px);
-    min-height: 330px;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    padding: 14px;
+    gap: 10px;
+  }
+  #device-preview-stage,
+  #device-preview-compare {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,.1);
     border-radius: 14px;
     background:
-      radial-gradient(ellipse at 50% 38%, rgba(255,255,255,0.08), transparent 58%),
-      #090909;
+      radial-gradient(ellipse at 50% 40%, rgba(255,255,255,.075), transparent 58%),
+      linear-gradient(135deg,#0c0d0f,#08090a);
   }
+  #device-preview-stage { display: block; }
+  #device-preview-stage.is-hidden { display: none; }
+  #device-preview-compare { display: none; gap: 12px; padding: 14px; }
+  #device-preview-compare.is-open { display: flex; }
   #device-preview-phone {
     position: absolute;
     top: 50%;
     left: 50%;
+    box-sizing: border-box;
     width: calc(var(--device-width, 390px) + 24px);
-    height: calc(var(--device-height, 846px) + 24px);
+    height: calc(var(--device-height, 844px) + 24px);
     padding: 11px;
     border: 1px solid #666;
     border-radius: 54px;
-    background: linear-gradient(145deg, #383838, #080808 30%, #202020 70%, #050505);
-    box-shadow: 0 22px 60px rgba(0,0,0,0.72), inset 0 0 0 2px #111;
-    transform: translate(-50%, -50%) scale(0.68);
+    background: linear-gradient(145deg,#414141,#080808 30%,#242424 70%,#050505);
+    box-shadow: 0 22px 60px rgba(0,0,0,.72), inset 0 0 0 2px #111;
+    transform: translate(-50%,-50%) scale(.68);
     transform-origin: center center;
+    touch-action: none;
   }
   #device-preview-frame {
     display: block;
-    width: var(--device-width, 390px);
-    height: var(--device-height, 846px);
+    width: var(--device-width,390px);
+    height: var(--device-height,844px);
     max-width: none;
     border: 0;
     border-radius: 40px;
     background: #101010;
   }
+  #device-preview-guides {
+    position: absolute;
+    z-index: 2;
+    top: 11px;
+    left: 11px;
+    right: 11px;
+    bottom: 11px;
+    overflow: hidden;
+    border-radius: 40px;
+    pointer-events: none;
+  }
+  #device-preview-guides.show-grid {
+    background-image:
+      linear-gradient(to right,rgba(255,90,90,.2) 1px,transparent 1px),
+      linear-gradient(to bottom,rgba(255,90,90,.2) 1px,transparent 1px);
+    background-size: 20px 20px;
+  }
+  #device-preview-guides .safe-top,
+  #device-preview-guides .safe-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: none;
+    border-color: rgba(255,211,128,.8);
+    border-style: dashed;
+    background: rgba(255,190,80,.055);
+  }
+  #device-preview-guides.show-safe .safe-top {
+    display: block;
+    top: 0;
+    height: 58px;
+    border-bottom-width: 1px;
+  }
+  #device-preview-guides.show-safe .safe-bottom {
+    display: block;
+    bottom: 0;
+    height: 34px;
+    border-top-width: 1px;
+  }
   .device-preview-island {
     position: absolute;
-    z-index: 3;
+    z-index: 4;
     top: 17px;
     left: 50%;
     width: 92px;
@@ -1310,26 +1472,134 @@ body.ui button, body.ui a { cursor: pointer; }
     border-radius: 999px;
     transform: translateX(-50%);
     background: #020202;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,.12);
     pointer-events: none;
   }
   .device-preview-home {
     position: absolute;
-    z-index: 3;
+    z-index: 4;
     bottom: 17px;
     left: 50%;
     width: 104px;
     height: 4px;
     border-radius: 999px;
     transform: translateX(-50%);
-    background: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,.9);
     pointer-events: none;
   }
+  .device-resize-handle {
+    position: absolute;
+    z-index: 8;
+    display: block;
+    background: transparent;
+    touch-action: none;
+  }
+  .device-resize-handle[data-edge="e"],
+  .device-resize-handle[data-edge="w"] {
+    top: 18%;
+    bottom: 18%;
+    width: 18px;
+    cursor: ew-resize;
+  }
+  .device-resize-handle[data-edge="e"] { right: -9px; }
+  .device-resize-handle[data-edge="w"] { left: -9px; }
+  .device-resize-handle[data-edge="n"],
+  .device-resize-handle[data-edge="s"] {
+    left: 18%;
+    right: 18%;
+    height: 18px;
+    cursor: ns-resize;
+  }
+  .device-resize-handle[data-edge="n"] { top: -9px; }
+  .device-resize-handle[data-edge="s"] { bottom: -9px; }
+  .device-resize-handle[data-edge="ne"],
+  .device-resize-handle[data-edge="nw"],
+  .device-resize-handle[data-edge="se"],
+  .device-resize-handle[data-edge="sw"] {
+    width: 24px;
+    height: 24px;
+  }
+  .device-resize-handle[data-edge="ne"] { top: -9px; right: -9px; cursor: nesw-resize; }
+  .device-resize-handle[data-edge="nw"] { top: -9px; left: -9px; cursor: nwse-resize; }
+  .device-resize-handle[data-edge="se"] { bottom: -9px; right: -9px; cursor: nwse-resize; }
+  .device-resize-handle[data-edge="sw"] { bottom: -9px; left: -9px; cursor: nesw-resize; }
+  .device-resize-handle::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 34px;
+    border-radius: 99px;
+    background: rgba(255,255,255,.68);
+    box-shadow: 0 0 0 1px rgba(0,0,0,.25);
+    transform: translate(-50%,-50%);
+  }
+  .device-resize-handle[data-edge="n"]::after,
+  .device-resize-handle[data-edge="s"]::after {
+    width: 34px;
+    height: 5px;
+  }
+  .device-resize-handle[data-edge="ne"]::after,
+  .device-resize-handle[data-edge="nw"]::after,
+  .device-resize-handle[data-edge="se"]::after,
+  .device-resize-handle[data-edge="sw"]::after {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .device-preview-status {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(244,239,230,.42);
+    font: 9px var(--mono);
+  }
+  .device-preview-status strong { color: rgba(244,239,230,.72); font-weight: 400; }
+  .device-compare-card {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 9px;
+    align-items: center;
+  }
+  .device-compare-title {
+    color: rgba(244,239,230,.8);
+    font: 10px var(--mono);
+    text-align: center;
+  }
+  .device-compare-screen {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    background: #08090a;
+  }
+  .device-compare-screen iframe {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    display: block;
+    border: 0;
+    background: #101010;
+    transform-origin: top center;
+  }
   .device-preview-foot {
-    color: rgba(244,239,230,0.48);
-    font-size: 10px;
-    line-height: 1.4;
+    color: rgba(244,239,230,.42);
+    font-size: 9px;
+    line-height: 1.5;
   }
 }
+
+@media (max-width: 1100px) and (min-width: 801px) {
+  .device-workbench-sidebar { width: 270px; min-width: 250px; flex-basis: 270px; padding: 12px; }
+  .device-workbench-workspace { padding: 10px; }
+}
+
 
 </style>
 </head>
@@ -1457,42 +1727,120 @@ body.ui button, body.ui a { cursor: pointer; }
 
 
   <button id="device-preview-launcher" type="button" aria-controls="device-preview-panel" aria-expanded="false">
-    <span aria-hidden="true">▣</span> iPhone 预览
+    <span aria-hidden="true">▣</span> 响应式调试工作台
   </button>
-  <section id="device-preview-panel" aria-label="iPhone 响应式预览">
-    <div class="device-preview-head">
-      <div class="device-preview-heading">
-        <strong>iPhone 响应式预览</strong>
-        <span>LIVE VIEWPORT TEST</span>
+  <section id="device-preview-panel" aria-label="响应式网页调试工作台">
+    <header class="device-workbench-head">
+      <div class="device-workbench-title">
+        <strong>响应式网页调试工作台</strong>
+        <span>RESPONSIVE DESIGN LAB · LIVE VIEWPORT</span>
       </div>
-      <div class="device-preview-actions">
-        <button id="device-preview-reload" type="button">刷新</button>
-        <button id="device-preview-close" type="button" aria-label="关闭预览">关闭</button>
+      <div class="device-workbench-actions">
+        <button id="device-preview-reload" type="button">刷新页面</button>
+        <button id="device-preview-compare-toggle" type="button">多设备对比</button>
+        <button id="device-preview-report" type="button">导出报告</button>
+        <button id="device-preview-screenshot" type="button">截图 PNG</button>
+        <button id="device-preview-close" type="button" aria-label="关闭工作台">关闭</button>
       </div>
+    </header>
+
+    <div class="device-workbench-body">
+      <aside class="device-workbench-sidebar">
+        <section class="device-control">
+          <h3>01 / 设备预设</h3>
+          <div class="device-preset-grid">
+            <button type="button" data-device-preset="375x667">iPhone 小屏<span>375 × 667</span></button>
+            <button type="button" data-device-preset="390x844" class="is-active">iPhone 标准<span>390 × 844</span></button>
+            <button type="button" data-device-preset="402x874">iPhone Pro<span>402 × 874</span></button>
+            <button type="button" data-device-preset="430x932">iPhone Max<span>430 × 932</span></button>
+          </div>
+          <div class="device-size-grid">
+            <div class="device-size-field">
+              <label for="device-preview-width-input">宽度 / PX</label>
+              <input id="device-preview-width-input" type="number" min="280" max="1200" value="390">
+            </div>
+            <div class="device-size-field">
+              <label for="device-preview-height-input">高度 / PX</label>
+              <input id="device-preview-height-input" type="number" min="420" max="2000" value="844">
+            </div>
+          </div>
+          <div class="device-range-wrap">
+            <label class="device-range-label" for="device-preview-slider"><span>宽度滑块</span><output id="device-preview-width">390 px</output></label>
+            <input id="device-preview-slider" type="range" min="280" max="1200" step="1" value="390">
+          </div>
+          <div class="device-range-wrap">
+            <label class="device-range-label" for="device-preview-height-slider"><span>高度滑块</span><output id="device-preview-height">844 px</output></label>
+            <input id="device-preview-height-slider" type="range" min="420" max="2000" step="1" value="844">
+          </div>
+          <label class="device-check-row"><input id="device-preview-lock-ratio" type="checkbox"> 锁定宽高比例</label>
+          <div class="device-control-row">
+            <button id="device-preview-orientation" type="button">切换横 / 竖屏</button>
+            <button id="device-preview-reset" type="button">重置尺寸</button>
+          </div>
+          <div class="device-range-wrap">
+            <label class="device-range-label" for="device-preview-zoom"><span>预览缩放（不改变网页视口）</span><output id="device-preview-zoom-value">100%</output></label>
+            <input id="device-preview-zoom" type="range" min="25" max="150" step="1" value="100">
+          </div>
+          <div class="device-control-row">
+            <button id="device-preview-save-preset" type="button">保存自定义尺寸</button>
+            <button id="device-preview-delete-preset" type="button">删除选中项</button>
+          </div>
+          <select id="device-preview-custom-select" aria-label="已保存的自定义设备尺寸">
+            <option value="">选择已保存的尺寸…</option>
+          </select>
+          <div class="device-control-note">可直接拖动手机外框的四边或四角调整尺寸。宽高数值、滑块和拖拽会同步更新。</div>
+        </section>
+
+        <section class="device-control">
+          <h3>02 / 视觉辅助</h3>
+          <label class="device-check-row"><input id="device-preview-grid-toggle" type="checkbox"> 显示 20px 网格参考线</label>
+          <label class="device-check-row"><input id="device-preview-safe-toggle" type="checkbox"> 显示安全区域参考线</label>
+          <div class="device-control-note">安全区域为常见 iPhone 刘海 / 灵动岛顶部与底部手势区域的视觉参考，不代表每台设备的精确系统 inset。</div>
+        </section>
+
+        <section class="device-control">
+          <h3>03 / 布局检查</h3>
+          <div class="device-control-row">
+            <button id="device-preview-overflow-check" type="button">检测横向溢出</button>
+            <button id="device-preview-inspector-toggle" type="button">元素检查：关闭</button>
+          </div>
+          <div id="device-preview-overflow-result">等待检测。调整尺寸后可重新运行检查。</div>
+          <div id="device-preview-inspector-details">开启元素检查后，点击手机页面中的任意元素，可查看尺寸、字体、间距与颜色。</div>
+        </section>
+      </aside>
+
+      <main class="device-workbench-workspace">
+        <div id="device-preview-stage">
+          <div id="device-preview-phone">
+            <iframe id="device-preview-frame" title="作品集真实视口预览" loading="lazy"></iframe>
+            <div id="device-preview-guides" aria-hidden="true">
+              <span class="safe-top"></span>
+              <span class="safe-bottom"></span>
+            </div>
+            <span class="device-preview-island" aria-hidden="true"></span>
+            <span class="device-preview-home" aria-hidden="true"></span>
+            <span class="device-resize-handle" data-edge="n" aria-label="调整上边缘"></span>
+            <span class="device-resize-handle" data-edge="s" aria-label="调整下边缘"></span>
+            <span class="device-resize-handle" data-edge="e" aria-label="调整右边缘"></span>
+            <span class="device-resize-handle" data-edge="w" aria-label="调整左边缘"></span>
+            <span class="device-resize-handle" data-edge="ne" aria-label="调整右上角"></span>
+            <span class="device-resize-handle" data-edge="nw" aria-label="调整左上角"></span>
+            <span class="device-resize-handle" data-edge="se" aria-label="调整右下角"></span>
+            <span class="device-resize-handle" data-edge="sw" aria-label="调整左下角"></span>
+          </div>
+        </div>
+        <div id="device-preview-compare" aria-label="多设备并排对比"></div>
+        <div class="device-preview-status">
+          <span id="device-preview-status-text">单设备预览 · 等待加载</span>
+          <span><strong id="device-preview-dimensions">390 × 844 px</strong> · 视口真实尺寸</span>
+        </div>
+        <div class="device-preview-foot">提示：拖拽边框改变网页实际视口；缩放只影响工作台中的显示大小。多设备对比会额外加载两个预览页面，可能增加浏览器资源占用。</div>
+      </main>
     </div>
-    <div class="device-preview-presets" aria-label="iPhone 尺寸预设">
-      <button type="button" data-device-width="375">小屏 375</button>
-      <button type="button" data-device-width="390" class="is-active">标准 390</button>
-      <button type="button" data-device-width="402">Pro 402</button>
-      <button type="button" data-device-width="430">Max 430</button>
-    </div>
-    <label class="device-preview-size" for="device-preview-slider">
-      <span>屏幕宽度</span>
-      <output id="device-preview-width">390 px</output>
-    </label>
-    <input id="device-preview-slider" type="range" min="320" max="440" step="1" value="390">
-    <div id="device-preview-stage">
-      <div id="device-preview-phone">
-        <iframe id="device-preview-frame" title="作品集 iPhone 尺寸预览" loading="lazy"></iframe>
-        <span class="device-preview-island" aria-hidden="true"></span>
-        <span class="device-preview-home" aria-hidden="true"></span>
-      </div>
-    </div>
-    <div class="device-preview-foot">拖动宽度滑块，检查文字、视频、卡片和导航在不同 iPhone 屏幕上的表现。</div>
   </section>
 
-
 <script>
+const FILMS = [<script>
 const FILMS = [
   { id: "01", src: "assets/films/01.mp4", poster: "assets/films/posters/01.jpg", left: "FOG", right: "FIRE", zh: "雾林", note: "开场" },
   { id: "02", src: "assets/films/02.mp4", poster: "assets/films/posters/02.jpg", left: "RED", right: "SAIL", zh: "红帆", note: "硬切" },
@@ -2334,63 +2682,187 @@ requestAnimationFrame(tick);
 
 <script>
 (function () {
-  const launcher = document.getElementById("device-preview-launcher");
-  const panel = document.getElementById("device-preview-panel");
-  const frame = document.getElementById("device-preview-frame");
-  const phone = document.getElementById("device-preview-phone");
-  const stage = document.getElementById("device-preview-stage");
-  const slider = document.getElementById("device-preview-slider");
-  const widthOutput = document.getElementById("device-preview-width");
-  const closeButton = document.getElementById("device-preview-close");
-  const reloadButton = document.getElementById("device-preview-reload");
-  if (!launcher || !panel || !frame || !phone || !stage || !slider) return;
+  const $ = function (id) { return document.getElementById(id); };
+  const launcher = $("device-preview-launcher");
+  const panel = $("device-preview-panel");
+  const frame = $("device-preview-frame");
+  const phone = $("device-preview-phone");
+  const stage = $("device-preview-stage");
+  const slider = $("device-preview-slider");
+  const heightSlider = $("device-preview-height-slider");
+  const widthInput = $("device-preview-width-input");
+  const heightInput = $("device-preview-height-input");
+  const widthOutput = $("device-preview-width");
+  const heightOutput = $("device-preview-height");
+  const zoomSlider = $("device-preview-zoom");
+  const zoomOutput = $("device-preview-zoom-value");
+  const guides = $("device-preview-guides");
+  const compare = $("device-preview-compare");
+  const statusText = $("device-preview-status-text");
+  const dimensionsText = $("device-preview-dimensions");
+  const overflowResult = $("device-preview-overflow-result");
+  const inspectorDetails = $("device-preview-inspector-details");
+  const customSelect = $("device-preview-custom-select");
+  const STORAGE_KEY = "portfolio-responsive-workbench-presets-v1";
 
-  const embedded = new URLSearchParams(window.location.search).get("devicePreview") === "1";
-  if (embedded) {
+  if (!launcher || !panel || !frame || !phone || !stage) return;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("devicePreview") === "1") {
     launcher.remove();
     panel.remove();
     return;
   }
 
-  let previewLoaded = false;
-  let currentWidth = 390;
+  const state = {
+    width: 390,
+    height: 844,
+    zoom: 100,
+    lockRatio: false,
+    ratio: 390 / 844,
+    compareOpen: false,
+    previewLoaded: false,
+    inspectorOn: false,
+    selectedElement: null,
+    previousOutline: null,
+    overflowText: "尚未检测",
+    customPresets: [],
+    resizeDrag: null,
+    compareFrames: []
+  };
 
-  function fitPhone() {
-    const height = Math.round(currentWidth * 2.17);
-    const rect = stage.getBoundingClientRect();
-    const outerWidth = currentWidth + 24;
-    const outerHeight = height + 24;
-    const scale = Math.min(
-      1,
-      Math.max(0.1, (rect.width - 18) / outerWidth),
-      Math.max(0.1, (rect.height - 18) / outerHeight)
-    );
-    phone.style.setProperty("--device-width", currentWidth + "px");
-    phone.style.setProperty("--device-height", height + "px");
-    phone.style.transform = "translate(-50%, -50%) scale(" + scale.toFixed(3) + ")";
-    frame.style.width = currentWidth + "px";
-    frame.style.height = height + "px";
-    widthOutput.textContent = currentWidth + " px";
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, Number(value) || min));
   }
 
-  function setWidth(value) {
-    currentWidth = Math.max(320, Math.min(440, Number(value) || 390));
-    slider.value = String(currentWidth);
-    document.querySelectorAll("[data-device-width]").forEach(function (button) {
-      button.classList.toggle("is-active", Number(button.dataset.deviceWidth) === currentWidth);
+  function previewUrl() {
+    const url = new URL(window.location.href);
+    url.searchParams.set("devicePreview", "1");
+    url.hash = "";
+    return url.toString();
+  }
+
+  function setStatus(message) {
+    statusText.textContent = message;
+  }
+
+  function fitPhone() {
+    const rect = stage.getBoundingClientRect();
+    const outerWidth = state.width + 24;
+    const outerHeight = state.height + 24;
+    const fitScale = Math.min(
+      1,
+      Math.max(0.05, (rect.width - 72) / outerWidth),
+      Math.max(0.05, (rect.height - 72) / outerHeight)
+    );
+    const scale = fitScale * (state.zoom / 100);
+    phone.style.setProperty("--device-width", state.width + "px");
+    phone.style.setProperty("--device-height", state.height + "px");
+    phone.style.transform = "translate(-50%,-50%) scale(" + scale.toFixed(4) + ")";
+    frame.style.width = state.width + "px";
+    frame.style.height = state.height + "px";
+    dimensionsText.textContent = state.width + " × " + state.height + " px";
+    widthOutput.textContent = state.width + " px";
+    heightOutput.textContent = state.height + " px";
+    zoomOutput.textContent = state.zoom + "%";
+  }
+
+  function syncControls() {
+    widthInput.value = String(state.width);
+    heightInput.value = String(state.height);
+    slider.value = String(state.width);
+    heightSlider.value = String(state.height);
+    zoomSlider.value = String(state.zoom);
+    $("device-preview-lock-ratio").checked = state.lockRatio;
+    document.querySelectorAll("[data-device-preset]").forEach(function (button) {
+      const parts = button.dataset.devicePreset.split("x").map(Number);
+      button.classList.toggle("is-active", parts[0] === state.width && parts[1] === state.height);
     });
     fitPhone();
+  }
+
+  function setSize(width, height, source) {
+    let w = clamp(width, 280, 1200);
+    let h = clamp(height, 420, 2000);
+    if (state.lockRatio && source === "width") h = clamp(Math.round(w / state.ratio), 420, 2000);
+    if (state.lockRatio && source === "height") w = clamp(Math.round(h * state.ratio), 280, 1200);
+    state.width = Math.round(w);
+    state.height = Math.round(h);
+    state.ratio = state.width / state.height;
+    syncControls();
+    if (state.previewLoaded) {
+      setStatus("视口已调整 · " + state.width + " × " + state.height + " px");
+      scheduleOverflowCheck();
+    }
+  }
+
+  function setPreset(width, height) {
+    state.lockRatio = false;
+    state.width = width;
+    state.height = height;
+    state.ratio = width / height;
+    syncControls();
+    if (state.previewLoaded) {
+      setStatus("已切换设备预设 · " + width + " × " + height + " px");
+      scheduleOverflowCheck();
+    }
+  }
+
+  function loadCustomPresets() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      state.customPresets = Array.isArray(saved) ? saved : [];
+    } catch (error) {
+      state.customPresets = [];
+    }
+    customSelect.innerHTML = '<option value="">选择已保存的尺寸…</option>';
+    state.customPresets.forEach(function (preset, index) {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = preset.name + " · " + preset.width + "×" + preset.height;
+      customSelect.appendChild(option);
+    });
+  }
+
+  function saveCustomPreset() {
+    const name = window.prompt("给这组设备尺寸起一个名字：", "我的自定义设备");
+    if (!name || !name.trim()) return;
+    state.customPresets.push({
+      name: name.trim().slice(0, 32),
+      width: state.width,
+      height: state.height
+    });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.customPresets));
+      loadCustomPresets();
+      customSelect.value = String(state.customPresets.length - 1);
+      setStatus("已保存自定义尺寸：" + name.trim());
+    } catch (error) {
+      window.alert("当前浏览器无法保存本地尺寸预设。");
+    }
+  }
+
+  function deleteCustomPreset() {
+    const index = Number(customSelect.value);
+    if (!Number.isInteger(index) || index < 0 || index >= state.customPresets.length) {
+      window.alert("请先选择一条已保存的自定义尺寸。");
+      return;
+    }
+    state.customPresets.splice(index, 1);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.customPresets)); } catch (error) {}
+    loadCustomPresets();
+    setStatus("已删除选中的自定义尺寸");
   }
 
   function openPreview() {
     panel.classList.add("is-open");
     launcher.setAttribute("aria-expanded", "true");
-    if (!previewLoaded) {
-      const url = new URL(window.location.href);
-      url.searchParams.set("devicePreview", "1");
-      url.hash = "";
-      frame.src = url.toString();
-      previewLoaded = true;
+    if (!state.previewLoaded) {
+      frame.src = previewUrl();
+      state.previewLoaded = true;
+      frame.addEventListener("load", function () {
+        setStatus("预览已加载 · " + state.width + " × " + state.height + " px");
+        scheduleOverflowCheck();
+      });
     }
     requestAnimationFrame(fitPhone);
   }
@@ -2398,21 +2870,357 @@ requestAnimationFrame(tick);
   function closePreview() {
     panel.classList.remove("is-open");
     launcher.setAttribute("aria-expanded", "false");
+    setStatus("工作台已收起");
+  }
+
+  function toggleCompare(force) {
+    state.compareOpen = typeof force === "boolean" ? force : !state.compareOpen;
+    stage.classList.toggle("is-hidden", state.compareOpen);
+    compare.classList.toggle("is-open", state.compareOpen);
+    $("device-preview-compare-toggle").classList.toggle("is-active", state.compareOpen);
+    if (state.compareOpen) {
+      buildCompare();
+      setStatus("多设备对比 · 375 / 390 / 430 px");
+    } else {
+      setStatus("单设备预览 · " + state.width + " × " + state.height + " px");
+    }
+  }
+
+  function buildCompare() {
+    if (compare.dataset.built === "1") {
+      requestAnimationFrame(fitCompareFrames);
+      return;
+    }
+    const devices = [
+      { name: "小屏", width: 375, height: 667 },
+      { name: "标准", width: 390, height: 844 },
+      { name: "Max", width: 430, height: 932 }
+    ];
+    devices.forEach(function (device) {
+      const card = document.createElement("div");
+      card.className = "device-compare-card";
+      const label = document.createElement("div");
+      label.className = "device-compare-title";
+      label.textContent = device.name + " · " + device.width + " × " + device.height;
+      const screen = document.createElement("div");
+      screen.className = "device-compare-screen";
+      const iframe = document.createElement("iframe");
+      iframe.title = device.name + "视口对比";
+      iframe.loading = "lazy";
+      iframe.style.width = device.width + "px";
+      iframe.style.height = device.height + "px";
+      iframe.src = previewUrl();
+      screen.appendChild(iframe);
+      card.appendChild(label);
+      card.appendChild(screen);
+      compare.appendChild(card);
+      state.compareFrames.push({ screen: screen, iframe: iframe, width: device.width, height: device.height });
+    });
+    compare.dataset.built = "1";
+    requestAnimationFrame(fitCompareFrames);
+  }
+
+  function fitCompareFrames() {
+    state.compareFrames.forEach(function (item) {
+      const rect = item.screen.getBoundingClientRect();
+      const scale = Math.min((rect.width - 12) / item.width, (rect.height - 12) / item.height);
+      item.iframe.style.transform = "translateX(-50%) scale(" + Math.max(0.05, scale).toFixed(4) + ")";
+      item.iframe.style.top = Math.max(0, (rect.height - item.height * scale) / 2) + "px";
+    });
+  }
+
+  function updateGuides() {
+    guides.classList.toggle("show-grid", $("device-preview-grid-toggle").checked);
+    guides.classList.toggle("show-safe", $("device-preview-safe-toggle").checked);
+  }
+
+  function attachInspector() {
+    if (!state.previewLoaded || !frame.contentDocument) return;
+    const doc = frame.contentDocument;
+    doc.body.style.cursor = state.inspectorOn ? "crosshair" : "";
+    if (doc.__workbenchInspectorHandler) {
+      doc.removeEventListener("click", doc.__workbenchInspectorHandler, true);
+      doc.__workbenchInspectorHandler = null;
+    }
+    if (!state.inspectorOn) return;
+    doc.__workbenchInspectorHandler = function (event) {
+      const element = event.target;
+      if (!element || element === doc.documentElement || element === doc.body) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (state.selectedElement && state.previousOutline) {
+        state.selectedElement.style.outline = state.previousOutline.outline;
+        state.selectedElement.style.outlineOffset = state.previousOutline.outlineOffset;
+      }
+      state.selectedElement = element;
+      state.previousOutline = {
+        outline: element.style.outline,
+        outlineOffset: element.style.outlineOffset
+      };
+      element.style.outline = "2px solid #ff5a5a";
+      element.style.outlineOffset = "-2px";
+      const rect = element.getBoundingClientRect();
+      const style = doc.defaultView.getComputedStyle(element);
+      const className = typeof element.className === "string" ? element.className.trim().replace(/\s+/g, ".") : "";
+      inspectorDetails.textContent =
+        "<" + element.tagName.toLowerCase() + (className ? "." + className : "") + ">\n" +
+        "尺寸：" + Math.round(rect.width) + " × " + Math.round(rect.height) + " px\n" +
+        "位置：" + Math.round(rect.left) + ", " + Math.round(rect.top) + "\n" +
+        "字体：" + style.fontSize + " / " + style.lineHeight + "\n" +
+        "间距：margin " + style.margin + "\n" +
+        "内边距：padding " + style.padding + "\n" +
+        "颜色：" + style.color;
+    };
+    doc.addEventListener("click", doc.__workbenchInspectorHandler, true);
+  }
+
+  function runOverflowCheck() {
+    if (!state.previewLoaded || !frame.contentDocument) {
+      overflowResult.textContent = "预览加载后即可检测。";
+      return;
+    }
+    const doc = frame.contentDocument;
+    const root = doc.documentElement;
+    const viewportWidth = doc.defaultView.innerWidth;
+    const scrollWidth = Math.max(root.scrollWidth, doc.body ? doc.body.scrollWidth : 0);
+    const overflow = Math.max(0, scrollWidth - viewportWidth);
+    const offenders = [];
+    Array.from(doc.body.querySelectorAll("*")).forEach(function (element) {
+      if (offenders.length >= 8) return;
+      const rect = element.getBoundingClientRect();
+      if (!rect.width || !rect.height || rect.bottom < 0 || rect.top > doc.defaultView.innerHeight) return;
+      const style = doc.defaultView.getComputedStyle(element);
+      if (style.display === "none" || style.visibility === "hidden") return;
+      if (style.position === "fixed" || style.position === "absolute") return;
+      if (rect.left < -2 || rect.right > viewportWidth + 2) {
+        const className = typeof element.className === "string" ? element.className.trim().replace(/\s+/g, ".") : "";
+        offenders.push(element.tagName.toLowerCase() + (className ? "." + className : "") +
+          " [" + Math.round(rect.left) + "…" + Math.round(rect.right) + "px]");
+      }
+    });
+    if (overflow > 2 || offenders.length) {
+      overflowResult.className = "is-warning";
+      overflowResult.textContent =
+        "发现可能的横向溢出\n文档宽度：" + scrollWidth + " px\n视口宽度：" + viewportWidth + " px\n超出：" + overflow + " px" +
+        (offenders.length ? "\n可疑元素：\n" + offenders.join("\n") : "");
+      state.overflowText = overflowResult.textContent;
+    } else {
+      overflowResult.className = "is-good";
+      overflowResult.textContent = "未发现明显横向溢出\n文档宽度：" + scrollWidth + " px\n视口宽度：" + viewportWidth + " px";
+      state.overflowText = overflowResult.textContent;
+    }
+  }
+
+  let overflowTimer = null;
+  function scheduleOverflowCheck() {
+    window.clearTimeout(overflowTimer);
+    overflowTimer = window.setTimeout(runOverflowCheck, 500);
+  }
+
+  function exportReport() {
+    const content = [
+      "作品集响应式检测报告",
+      "检测时间：" + new Date().toLocaleString(),
+      "视口尺寸：" + state.width + " × " + state.height + " px",
+      "预览缩放：" + state.zoom + "%",
+      "宽高比例锁定：" + (state.lockRatio ? "是" : "否"),
+      "",
+      "横向溢出检测：",
+      state.overflowText,
+      "",
+      "说明：该报告来自桌面浏览器中的真实 CSS 视口模拟，不等同于真实 iPhone Safari 的系统渲染测试。"
+    ].join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "portfolio-responsive-report.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+    setStatus("检测报告已导出");
+  }
+
+  function loadHtml2Canvas() {
+    if (window.html2canvas) return Promise.resolve(window.html2canvas);
+    if (window.__html2canvasLoading) return window.__html2canvasLoading;
+    window.__html2canvasLoading = new Promise(function (resolve, reject) {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+      script.onload = function () { resolve(window.html2canvas); };
+      script.onerror = function () { reject(new Error("截图组件加载失败")); };
+      document.head.appendChild(script);
+    });
+    return window.__html2canvasLoading;
+  }
+
+  async function saveScreenshot() {
+    if (!state.previewLoaded || !frame.contentDocument) {
+      window.alert("请先等待手机预览加载完成。");
+      return;
+    }
+    try {
+      setStatus("正在生成 PNG 截图…");
+      const html2canvas = await loadHtml2Canvas();
+      const doc = frame.contentDocument;
+      const scrollY = doc.defaultView.scrollY;
+      const canvas = await html2canvas(doc.documentElement, {
+        width: state.width,
+        height: state.height,
+        windowWidth: state.width,
+        windowHeight: state.height,
+        x: 0,
+        y: scrollY,
+        scrollX: 0,
+        scrollY: scrollY,
+        scale: 1,
+        useCORS: true,
+        backgroundColor: "#101010",
+        logging: false
+      });
+      const link = document.createElement("a");
+      link.download = "portfolio-" + state.width + "x" + state.height + ".png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      setStatus("PNG 已导出。提示：浏览器截图组件可能无法捕获正在播放的视频帧。");
+    } catch (error) {
+      setStatus("自动截图失败，可使用系统截图快捷键 Win + Shift + S。");
+      window.alert("自动截图未能完成。你仍可使用 Win + Shift + S 截取手机预览区域。\n" + error.message);
+    }
+  }
+
+  function startResize(event) {
+    const handle = event.target.closest("[data-edge]");
+    if (!handle) return;
+    if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
+    state.resizeDrag = {
+      pointerId: event.pointerId,
+      edge: handle.dataset.edge,
+      x: event.clientX,
+      y: event.clientY,
+      width: state.width,
+      height: state.height,
+      ratio: state.width / state.height
+    };
+    handle.setPointerCapture(event.pointerId);
+  }
+
+  function moveResize(event) {
+    const drag = state.resizeDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    let width = drag.width;
+    let height = drag.height;
+    if (drag.edge.indexOf("e") >= 0) width += dx / currentPhoneScale();
+    if (drag.edge.indexOf("w") >= 0) width -= dx / currentPhoneScale();
+    if (drag.edge.indexOf("s") >= 0) height += dy / currentPhoneScale();
+    if (drag.edge.indexOf("n") >= 0) height -= dy / currentPhoneScale();
+    if (state.lockRatio) {
+      const horizontalChange = Math.abs(width - drag.width) / drag.width;
+      const verticalChange = Math.abs(height - drag.height) / drag.height;
+      if (horizontalChange >= verticalChange) height = width / drag.ratio;
+      else width = height * drag.ratio;
+    }
+    state.width = Math.round(clamp(width, 280, 1200));
+    state.height = Math.round(clamp(height, 420, 2000));
+    state.ratio = state.width / state.height;
+    syncControls();
+  }
+
+  function currentPhoneScale() {
+    const transform = window.getComputedStyle(phone).transform;
+    if (!transform || transform === "none") return 1;
+    const match = transform.match(/^matrix\(([^,]+)/);
+    return match ? Math.max(.05, Number(match[1]) || 1) : 1;
+  }
+
+  function endResize(event) {
+    if (!state.resizeDrag || state.resizeDrag.pointerId !== event.pointerId) return;
+    state.resizeDrag = null;
+    setStatus("已通过拖拽调整至 " + state.width + " × " + state.height + " px");
+    scheduleOverflowCheck();
   }
 
   launcher.addEventListener("click", openPreview);
-  closeButton.addEventListener("click", closePreview);
-  reloadButton.addEventListener("click", function () {
-    if (previewLoaded && frame.contentWindow) frame.contentWindow.location.reload();
+  $("device-preview-close").addEventListener("click", closePreview);
+  $("device-preview-reload").addEventListener("click", function () {
+    if (state.previewLoaded) frame.contentWindow.location.reload();
   });
-  slider.addEventListener("input", function () { setWidth(slider.value); });
-  document.querySelectorAll("[data-device-width]").forEach(function (button) {
-    button.addEventListener("click", function () { setWidth(button.dataset.deviceWidth); });
+  $("device-preview-compare-toggle").addEventListener("click", function () { toggleCompare(); });
+  $("device-preview-report").addEventListener("click", exportReport);
+  $("device-preview-screenshot").addEventListener("click", saveScreenshot);
+  $("device-preview-reset").addEventListener("click", function () { setPreset(390, 844); });
+  $("device-preview-orientation").addEventListener("click", function () { setPreset(state.height, state.width); });
+  $("device-preview-save-preset").addEventListener("click", saveCustomPreset);
+  $("device-preview-delete-preset").addEventListener("click", deleteCustomPreset);
+  $("device-preview-overflow-check").addEventListener("click", runOverflowCheck);
+  $("device-preview-grid-toggle").addEventListener("change", updateGuides);
+  $("device-preview-safe-toggle").addEventListener("change", updateGuides);
+  $("device-preview-inspector-toggle").addEventListener("click", function () {
+    state.inspectorOn = !state.inspectorOn;
+    this.textContent = "元素检查：" + (state.inspectorOn ? "开启" : "关闭");
+    this.classList.toggle("is-active", state.inspectorOn);
+    attachInspector();
+    setStatus(state.inspectorOn ? "元素检查已开启 · 点击手机页面中的元素" : "元素检查已关闭");
   });
+
+  widthInput.addEventListener("change", function () { setSize(this.value, state.height, "width"); });
+  heightInput.addEventListener("change", function () { setSize(state.width, this.value, "height"); });
+  slider.addEventListener("input", function () { setSize(this.value, state.height, "width"); });
+  heightSlider.addEventListener("input", function () { setSize(state.width, this.value, "height"); });
+  zoomSlider.addEventListener("input", function () {
+    state.zoom = clamp(this.value, 25, 150);
+    syncControls();
+  });
+  $("device-preview-lock-ratio").addEventListener("change", function () {
+    state.lockRatio = this.checked;
+    state.ratio = state.width / state.height;
+  });
+
+  document.querySelectorAll("[data-device-preset]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      const parts = this.dataset.devicePreset.split("x").map(Number);
+      setPreset(parts[0], parts[1]);
+    });
+  });
+  customSelect.addEventListener("change", function () {
+    const index = Number(this.value);
+    if (!Number.isInteger(index) || !state.customPresets[index]) return;
+    const preset = state.customPresets[index];
+    setPreset(preset.width, preset.height);
+  });
+
+  phone.addEventListener("pointerdown", startResize);
+  window.addEventListener("pointermove", moveResize);
+  window.addEventListener("pointerup", endResize);
+  window.addEventListener("pointercancel", endResize);
   window.addEventListener("resize", function () {
-    if (panel.classList.contains("is-open")) fitPhone();
+    if (panel.classList.contains("is-open")) {
+      fitPhone();
+      fitCompareFrames();
+    }
   });
-  setWidth(390);
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      if (panel.classList.contains("is-open")) {
+        fitPhone();
+        fitCompareFrames();
+      }
+    }).observe(stage);
+  }
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && panel.classList.contains("is-open")) closePreview();
+  });
+  frame.addEventListener("load", function () {
+    attachInspector();
+    scheduleOverflowCheck();
+  });
+
+  loadCustomPresets();
+  setPreset(390, 844);
+  state.zoom = 100;
+  syncControls();
 })();
 </script>
 
