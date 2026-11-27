@@ -1,6 +1,11 @@
 name: Optimize portfolio videos
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/optimize-videos.yml"
   workflow_dispatch:
     inputs:
       quality:
@@ -62,12 +67,21 @@ jobs:
           REPORT="$RUNNER_TEMP/video-report.md"
           printf '| File | Original | Final | Saved |\n|---|---:|---:|---:|\n' > "$REPORT"
 
-          while IFS= read -r -d '' FILE; do
-            BEFORE=$(stat -c%s "$FILE")
+          mapfile -d '' -t VIDEO_FILES < <(
+            find "$GITHUB_WORKSPACE/assets/films" -type f -iname '*.mp4' -print0 | sort -z
+          )
+          if (("${#VIDEO_FILES[@]}" == 0)); then
+            echo "No MP4 files found under assets/films."
+            exit 1
+          fi
+
+          for FILE in "${VIDEO_FILES[@]}"; do
+            BEFORE=$(stat -c%s -- "$FILE")
             ORIGINAL_TOTAL=$((ORIGINAL_TOTAL + BEFORE))
             TMP="${FILE}.optimized.mp4"
+            RELATIVE_FILE="${FILE#"$GITHUB_WORKSPACE"/}"
 
-            echo "Optimizing $FILE ($BEFORE bytes, CRF $CRF)"
+            echo "Optimizing $RELATIVE_FILE ($BEFORE bytes, CRF $CRF)"
             ffmpeg -hide_banner -loglevel error -y -i "$FILE" \
               -map 0:v:0 -map '0:a?' -map_metadata 0 \
               -vf "scale='min(1920,iw)':'min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2:flags=lanczos" \
@@ -78,25 +92,25 @@ jobs:
             ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height \
               -of csv=p=0 "$TMP" >/dev/null
 
-            AFTER=$(stat -c%s "$TMP")
+            AFTER=$(stat -c%s -- "$TMP")
             if (( AFTER < BEFORE )); then
-              mv "$TMP" "$FILE"
+              mv -f -- "$TMP" "$FILE"
               CHANGED=$((CHANGED + 1))
               SAVED=$((BEFORE - AFTER))
-              echo "Saved $SAVED bytes: $FILE"
+              echo "Saved $SAVED bytes: $RELATIVE_FILE"
             else
-              rm -f "$TMP"
+              rm -f -- "$TMP"
               AFTER=$BEFORE
               SAVED=0
-              echo "Kept original because re-encode was not smaller: $FILE"
+              echo "Kept original because re-encode was not smaller: $RELATIVE_FILE"
             fi
 
             FINAL_TOTAL=$((FINAL_TOTAL + AFTER))
-            printf '| %s | %.2f MB | %.2f MB | %.2f MB |\n' \
-              "$FILE" "$(awk "BEGIN {print $BEFORE/1048576}")" \
+            printf '| %s | %.2f MB | %.2f MB | %.2f MB |\\n' \
+              "$RELATIVE_FILE" "$(awk "BEGIN {print $BEFORE/1048576}")" \
               "$(awk "BEGIN {print $AFTER/1048576}")" \
               "$(awk "BEGIN {print $SAVED/1048576}")" >> "$REPORT"
-          done < <(find assets/films -type f -iname '*.mp4' -print0 | sort -z)
+          done
 
           touch .video-optimized-v1
           {
