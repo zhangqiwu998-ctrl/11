@@ -1,165 +1,84 @@
 "use strict";
 
-const CACHE_NAME = "fogfire-media-v1";
-const ASSETS = [
-  { path: "assets/films/01.mp4", bytes: 10559520 },
-  { path: "assets/films/posters/01.jpg", bytes: 127725 },
-  { path: "assets/films/02.mp4", bytes: 9483485 },
-  { path: "assets/films/posters/02.jpg", bytes: 152949 },
-  { path: "assets/films/03.mp4", bytes: 5949464 },
-  { path: "assets/films/posters/03.jpg", bytes: 89026 },
-  { path: "assets/films/portfolio/01.mp4", bytes: 5000168 },
-  { path: "assets/films/portfolio/posters/01.jpg", bytes: 45385 },
-  { path: "assets/films/portfolio/02.mp4", bytes: 6011776 },
-  { path: "assets/films/portfolio/posters/02.jpg", bytes: 41158 },
-  { path: "assets/films/portfolio/03.mp4", bytes: 5883129 },
-  { path: "assets/films/portfolio/posters/03.jpg", bytes: 33555 },
-  { path: "assets/films/portfolio/04.mp4", bytes: 5928572 },
-  { path: "assets/films/portfolio/posters/04.jpg", bytes: 40110 },
-  { path: "assets/films/portfolio/05.mp4", bytes: 4310478 },
-  { path: "assets/films/portfolio/posters/05.jpg", bytes: 55442 },
-  { path: "assets/films/portfolio/06.mp4", bytes: 6885163 },
-  { path: "assets/films/portfolio/posters/06.jpg", bytes: 57770 },
-  { path: "assets/films/portfolio/07.mp4", bytes: 2958556 },
-  { path: "assets/films/portfolio/posters/07.jpg", bytes: 75048 },
-  { path: "assets/films/portfolio/08.mp4", bytes: 3293628 },
-  { path: "assets/films/portfolio/posters/08.jpg", bytes: 82309 },
-  { path: "assets/films/portfolio/09.mp4", bytes: 4417260 },
-  { path: "assets/films/portfolio/posters/09.jpg", bytes: 63399 },
-  { path: "assets/films/plate.mp4", bytes: 18895441 },
-  { path: "assets/films/plate.jpg", bytes: 97282 }
-];
-const TOTAL_BYTES = ASSETS.reduce((sum, item) => sum + item.bytes, 0);
-const URL_TO_ASSET = new Map(
-  ASSETS.map(item => [new URL(item.path, self.registration.scope).href, item])
-);
+const CACHE_NAME = "fogfire-media-v2";
+const MEDIA_ROOT = new URL("assets/films/", self.registration.scope);
+const pending = new Map();
 
-function notify(targets, payload) {
-  (targets || []).forEach(client => {
-    try { client.postMessage(payload); } catch (error) {}
-  });
+function isPortfolioMedia(url) {
+  return url.origin === MEDIA_ROOT.origin && url.pathname.startsWith(MEDIA_ROOT.pathname);
 }
 
-async function preloadAll(targets) {
-  const cache = await caches.open(CACHE_NAME);
-  const queue = ASSETS.slice();
-  let completedFiles = 0;
-  let completedBytes = 0;
-  const inFlightBytes = new Map();
+function resolveMediaUrl(path) {
+  const url = new URL(path, self.registration.scope);
+  if (!isPortfolioMedia(url)) throw new Error("拒绝缓存非作品集媒体地址");
+  return url;
+}
 
-  function report(current) {
-    let activeBytes = 0;
-    inFlightBytes.forEach(value => { activeBytes += value; });
-    notify(targets, {
-      type: "progress",
-      done: completedFiles,
-      total: ASSETS.length,
-      loadedBytes: Math.min(TOTAL_BYTES, completedBytes + activeBytes),
-      totalBytes: TOTAL_BYTES,
-      current: current || ""
-    });
+function notify(client, payload) {
+  if (!client) return;
+  try { client.postMessage(payload); } catch (error) {}
+}
+
+async function cacheOne(path) {
+  const url = resolveMediaUrl(path);
+  const cache = await caches.open(CACHE_NAME);
+  const existing = await cache.match(url.href);
+  if (existing) return "cached";
+
+  if (pending.has(url.href)) {
+    await pending.get(url.href);
+    return "cached";
   }
 
+  const task = (async function () {
+    const response = await fetch(url.href, { cache: "reload" });
+    if (!response.ok || response.status !== 200) {
+      throw new Error("HTTP " + response.status + " · " + path);
+    }
+    await cache.put(url.href, response.clone());
+    return "downloaded";
+  })();
+
+  pending.set(url.href, task);
+  try {
+    return await task;
+  } finally {
+    pending.delete(url.href);
+  }
+}
+
+async function cachePaths(paths, client, concurrency) {
+  const queue = Array.from(new Set((paths || []).filter(path => typeof path === "string")));
+  let cursor = 0;
+  let done = 0;
+  const total = queue.length;
+
   async function worker() {
-    while (queue.length) {
-      const asset = queue.shift();
-      if (!asset) return;
-      const url = new URL(asset.path, self.registration.scope).href;
+    while (cursor < queue.length) {
+      const path = queue[cursor++];
       try {
-        const existing = await cache.match(url);
-        if (existing) {
-          completedFiles += 1;
-          completedBytes += asset.bytes;
-          report(asset.path);
-          continue;
-        }
-
-        const response = await fetch(url, { cache: "reload" });
-        if (!response.ok) throw new Error("HTTP " + response.status + " · " + asset.path);
-
-        const headers = new Headers(response.headers);
-        headers.set("Accept-Ranges", "bytes");
-
-        if (response.body && typeof response.body.tee === "function") {
-          const streams = response.body.tee();
-          const cacheResponse = new Response(streams[0], {
-            status: response.status,
-            statusText: response.statusText,
-            headers
-          });
-          const savePromise = cache.put(url, cacheResponse);
-          const progressPromise = (async function () {
-            const reader = streams[1].getReader();
-            let received = 0;
-            let lastReport = 0;
-            while (true) {
-              const part = await reader.read();
-              if (part.done) break;
-              received += part.value.byteLength;
-              inFlightBytes.set(asset.path, received);
-              const now = Date.now();
-              if (now - lastReport > 120) {
-                report(asset.path);
-                lastReport = now;
-              }
-            }
-            return received;
-          })();
-          const results = await Promise.all([savePromise, progressPromise]);
-          inFlightBytes.delete(asset.path);
-          completedBytes += results[1] || asset.bytes;
-        } else {
-          const blob = await response.blob();
-          await cache.put(url, new Response(blob, { status: 200, headers }));
-          completedBytes += blob.size || asset.bytes;
-        }
-
-        completedFiles += 1;
-        report(asset.path);
+        const result = await cacheOne(path);
+        done += 1;
+        notify(client, { type: "MEDIA_CACHE_PROGRESS", path, result, done, total });
       } catch (error) {
-        inFlightBytes.delete(asset.path);
-        notify(targets, {
-          type: "error",
-          message: error && error.message ? error.message : "素材下载失败：" + asset.path
+        done += 1;
+        notify(client, {
+          type: "MEDIA_CACHE_ERROR",
+          path,
+          message: error && error.message ? error.message : "媒体缓存失败",
+          done,
+          total
         });
-        throw error;
       }
     }
   }
 
-  await Promise.all([worker(), worker()]);
-  notify(targets, {
-    type: "complete",
-    done: ASSETS.length,
-    total: ASSETS.length,
-    loadedBytes: TOTAL_BYTES,
-    totalBytes: TOTAL_BYTES
-  });
+  const count = Math.max(1, Math.min(concurrency || 1, queue.length || 1));
+  await Promise.all(Array.from({ length: count }, worker));
 }
 
-self.addEventListener("install", event => {
-  event.waitUntil(self.skipWaiting());
-});
-
-self.addEventListener("activate", event => {
-  event.waitUntil((async function () {
-    const keys = await caches.keys();
-    await Promise.all(keys
-      .filter(key => key.startsWith("fogfire-media-") && key !== CACHE_NAME)
-      .map(key => caches.delete(key)));
-    await self.clients.claim();
-  })());
-});
-
-self.addEventListener("message", event => {
-  if (event.data && event.data.type === "PRELOAD_ALL") {
-    const targets = event.source ? [event.source] : [];
-    event.waitUntil(preloadAll(targets));
-  }
-});
-
 async function makeRangeResponse(cached, rangeHeader) {
-  const match = /^bytes=(\d*)-(\d*)$/i.exec(rangeHeader || "");
+  const match = /^bytes=(\\d*)-(\\d*)$/i.exec(rangeHeader || "");
   if (!match) return null;
 
   const blob = await cached.blob();
@@ -192,22 +111,52 @@ async function makeRangeResponse(cached, rangeHeader) {
   return new Response(blob.slice(start, end + 1), { status: 206, headers });
 }
 
+self.addEventListener("install", event => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener("activate", event => {
+  event.waitUntil((async function () {
+    const keys = await caches.keys();
+    await Promise.all(keys
+      .filter(key => key.startsWith("fogfire-media-") && key !== CACHE_NAME)
+      .map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener("message", event => {
+  const data = event.data || {};
+  if (data.type === "CACHE_IMAGES") {
+    event.waitUntil(cachePaths(data.paths, event.source, 4));
+  } else if (data.type === "PREFETCH_VIDEO") {
+    event.waitUntil(cachePaths([data.path], event.source, 1));
+  }
+});
+
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
-  if (!URL_TO_ASSET.has(url.href)) return;
+  if (!isPortfolioMedia(url)) return;
 
   event.respondWith((async function () {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(url.href);
-    if (!cached) return fetch(request);
-
     const rangeHeader = request.headers.get("Range");
-    if (rangeHeader) {
-      const ranged = await makeRangeResponse(cached, rangeHeader);
-      if (ranged) return ranged;
+
+    if (cached) {
+      if (rangeHeader) {
+        const ranged = await makeRangeResponse(cached, rangeHeader);
+        if (ranged) return ranged;
+      }
+      return cached;
     }
-    return cached;
+
+    const response = await fetch(request);
+    if (!rangeHeader && response.ok && response.status === 200) {
+      event.waitUntil(cache.put(url.href, response.clone()).catch(function () {}));
+    }
+    return response;
   })());
 });
