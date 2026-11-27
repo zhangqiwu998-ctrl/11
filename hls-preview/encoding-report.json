@@ -1,0 +1,77 @@
+[
+  {
+    "clip": "landscape",
+    "original_bytes": 5183902,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "844x360",
+        "segments": 5,
+        "seconds": 10.0,
+        "bytes": 738464,
+        "first_segment_bytes": 148896,
+        "peak_bps": 670032
+      },
+      {
+        "short_edge": 540,
+        "resolution": "1268x540",
+        "segments": 5,
+        "seconds": 10.0,
+        "bytes": 1241552,
+        "first_segment_bytes": 259252,
+        "peak_bps": 1140709
+      },
+      {
+        "short_edge": 720,
+        "resolution": "1690x720",
+        "segments": 5,
+        "seconds": 10.0,
+        "bytes": 2177980,
+        "first_segment_bytes": 455712,
+        "peak_bps": 2005133
+      }
+    ]
+  },
+  {
+    "clip": "portrait",
+    "original_bytes": 3143027,
+    "variants": [
+      {
+        "short_edge": 360,
+        "resolution": "360x640",
+        "segments": 3,
+        "seconds": 4.5,
+        "bytes": 245904,
+        "first_segment_bytes": 111108,
+        "peak_bps": 551743
+      },
+      {
+        "short_edge": 540,
+        "resolution": "540x960",
+        "segments": 3,
+        "seconds": 4.5,
+        "bytes": 447252,
+        "first_segment_bytes": 211688,
+        "peak_bps": 989332
+      },
+      {
+        "short_edge": 720,
+        "resolution": "720x1280",
+        "segments": 3,
+        "seconds": 4.5,
+        "bytes": 820432,
+        "first_segment_bytes": 404576,
+        "peak_bps": 1780135
+      },
+      {
+        "short_edge": 1080,
+        "resolution": "1080x1920",
+        "segments": 3,
+        "seconds": 4.5,
+        "bytes": 1537464,
+        "first_segment_bytes": 792232,
+        "peak_bps": 3485821
+      }
+    ]
+  }
+]
