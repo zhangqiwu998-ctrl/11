@@ -159,7 +159,7 @@ self.addEventListener("message", event => {
 });
 
 async function makeRangeResponse(cached, rangeHeader) {
-  const match = /^bytes=(\\d*)-(\\d*)$/i.exec(rangeHeader || "");
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(rangeHeader || "");
   if (!match) return null;
 
   const blob = await cached.blob();
