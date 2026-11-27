@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "fogfire-media-v2";
+const CACHE_NAME = "fogfire-media-v3";
 const MEDIA_ROOT = new URL("assets/films/", self.registration.scope);
 const pending = new Map();
 
