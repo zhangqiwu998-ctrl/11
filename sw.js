@@ -138,11 +138,7 @@ async function preloadAll(targets) {
 }
 
 self.addEventListener("install", event => {
-  event.waitUntil((async function () {
-    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    await preloadAll(clients);
-    await self.skipWaiting();
-  })());
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", event => {
