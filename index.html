@@ -1706,7 +1706,7 @@ body.ui button, body.ui a { cursor: pointer; }
     left: 4vw !important;
     width: 92vw;
     height: auto;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 2.35 / 1;
     overflow: visible !important;
     border-radius: 14px !important;
     background: rgba(2, 6, 12, 0.72);
@@ -1719,7 +1719,8 @@ body.ui button, body.ui a { cursor: pointer; }
     clip-path: none !important;
     transform: none !important;
     border-radius: 13px;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center;
     background: rgba(2, 5, 10, 0.82);
     transition: opacity 0.38s ease;
     will-change: opacity;
@@ -1750,7 +1751,7 @@ body.ui button, body.ui a { cursor: pointer; }
 
   .side {
     display: flex !important;
-    top: calc(39svh + 51.75vw + 4.5svh);
+    top: calc(39svh + 39.15vw + 4.5svh);
     right: auto;
     bottom: auto;
     width: 50%;
