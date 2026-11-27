@@ -44,7 +44,7 @@ jobs:
       - name: Compress MP4 files
         id: compress
         env:
-          QUALITY: ${{ inputs.quality }}
+          QUALITY: ${{ inputs.quality || 'balanced' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -106,7 +106,7 @@ jobs:
             fi
 
             FINAL_TOTAL=$((FINAL_TOTAL + AFTER))
-            printf '| %s | %.2f MB | %.2f MB | %.2f MB |\\n' \
+            printf '| %s | %.2f MB | %.2f MB | %.2f MB |\n' \
               "$RELATIVE_FILE" "$(awk "BEGIN {print $BEFORE/1048576}")" \
               "$(awk "BEGIN {print $AFTER/1048576}")" \
               "$(awk "BEGIN {print $SAVED/1048576}")" >> "$REPORT"
