@@ -994,42 +994,34 @@ body.ui button, body.ui a { cursor: pointer; }
   html, body {
     width: 100%;
     overflow-x: clip;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  body *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
   body { min-width: 320px; }
-  .top { padding: max(12px, env(safe-area-inset-top, 0px)) 4vw 0; }
-  .top-nav { gap: clamp(10px, 2.8vw, 16px); }
-  .top-nav button {
-    min-height: 40px;
-    font-size: 10px;
-    letter-spacing: 0.08em;
+
+  /* Mobile opening reel: remove the header and player UI entirely. */
+  .top,
+  .player {
+    display: none !important;
   }
+
+  /* Edge-to-edge video, including the safe-area regions. */
   .frame {
-    top: max(7vh, calc(env(safe-area-inset-top, 0px) + 50px));
-    right: 3vw;
-    bottom: max(9vh, calc(env(safe-area-inset-bottom, 0px) + 58px));
-    left: 3vw;
-    border-radius: 18px;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
   .open-clip span { font-size: clamp(48px, 14vw, 58px); }
-  .player {
-    left: 4vw;
-    right: 4vw;
-    bottom: max(8px, env(safe-area-inset-bottom, 0px));
-    gap: clamp(5px, 1.6vw, 9px);
-    font-size: 10px;
-  }
-  .player button {
-    min-height: 36px;
-    padding: 6px 3px;
-    font-size: 10px;
-    letter-spacing: 0.06em;
-  }
-  .ruler { gap: clamp(3px, 1vw, 6px); }
-  .ruler button {
-    min-width: 26px;
-    min-height: 36px;
-    font-size: 10px;
-  }
 
   .hero-card {
     height: 100vh;
@@ -2584,17 +2576,31 @@ function frameBox() {
   const w = window.innerWidth;
   const h = window.innerHeight;
   const narrow = w < 800;
-  const y = h * (narrow ? 0.07 : 0.042);
+  if (narrow) {
+    return {
+      x: 0,
+      y: 0,
+      w: Math.max(1, w),
+      h: Math.max(1, h),
+      r: 0
+    };
+  }
+  const y = h * 0.042;
   return {
-    x: w * (narrow ? 0.03 : 0.025),
+    x: w * 0.025,
     y: y,
-    w: Math.max(1, w * (narrow ? 0.94 : 0.95)),
-    h: Math.max(1, h - y - h * (narrow ? 0.09 : 0.072)),
-    r: narrow ? 20 : 32
+    w: Math.max(1, w * 0.95),
+    h: Math.max(1, h - y - h * 0.072),
+    r: 32
   };
 }
 function traceFrame(box) {
   const r = Math.min(box.r, box.w / 2 - 1, box.h / 2 - 1);
+  if (r < 1) {
+    const d = "M 0.5 0.5 H " + (box.w - 0.5) +
+      " V " + (box.h - 0.5) + " H 0.5 Z";
+    return { d: d, top: Math.max(1, box.w - 1) };
+  }
   const d = "M " + r + " 0.5 H " + (box.w - r) +
     " A " + r + " " + r + " 0 0 1 " + (box.w - 0.5) + " " + r +
     " V " + (box.h - r) +
