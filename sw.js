@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "fogfire-media-v3";
+const CACHE_NAME = "fogfire-media-v4";
 const MEDIA_ROOT = new URL("assets/films/", self.registration.scope);
 const pending = new Map();
 
@@ -31,7 +31,7 @@ async function cacheOne(path) {
   }
 
   const task = (async function () {
-    const response = await fetch(url.href, { cache: "reload" });
+    const response = await fetch(url.href, { cache: "default", priority: "low" });
     if (!response.ok || response.status !== 200) {
       throw new Error("HTTP " + response.status + " · " + path);
     }
@@ -128,7 +128,7 @@ self.addEventListener("activate", event => {
 self.addEventListener("message", event => {
   const data = event.data || {};
   if (data.type === "CACHE_IMAGES") {
-    event.waitUntil(cachePaths(data.paths, event.source, 4));
+    event.waitUntil(cachePaths(data.paths, event.source, 2));
   } else if (data.type === "PREFETCH_VIDEO") {
     event.waitUntil(cachePaths([data.path], event.source, 1));
   }
@@ -139,22 +139,26 @@ self.addEventListener("fetch", event => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (!isPortfolioMedia(url)) return;
+  // Keep the opening clip on the browser's native HTTP Range path, including Safari.
+  if (url.pathname === new URL("01.mp4", MEDIA_ROOT).pathname) return;
 
   event.respondWith((async function () {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(url.href);
     const rangeHeader = request.headers.get("Range");
-
-    if (cached) {
-      if (rangeHeader) {
+    let cache;
+    try {
+      cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match(url.href);
+      if (cached) {
+        if (!rangeHeader) return cached;
         const ranged = await makeRangeResponse(cached, rangeHeader);
         if (ranged) return ranged;
       }
-      return cached;
+    } catch (error) {
+      // A damaged/unavailable cache must not prevent network playback.
     }
 
     const response = await fetch(request);
-    if (!rangeHeader && response.ok && response.status === 200) {
+    if (cache && !rangeHeader && response.ok && response.status === 200) {
       event.waitUntil(cache.put(url.href, response.clone()).catch(function () {}));
     }
     return response;

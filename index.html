@@ -1812,7 +1812,7 @@ body.ui button, body.ui a { cursor: pointer; }
     </header>
 
     <div class="frame" id="frame">
-      <video id="vid-a" playsinline muted loop preload="none"></video>
+      <video id="vid-a" playsinline muted loop preload="auto" src="assets/films/01.mp4?v=first-frame-v4" poster="assets/films/posters/01.jpg" data-id="01" data-src="assets/films/01.mp4?v=first-frame-v4"></video>
       <video id="vid-b" playsinline muted loop preload="none"></video>
       <div class="open-title" id="open-title">
         <div class="open-clip"><span id="open-a">FOG</span></div>
@@ -2055,7 +2055,7 @@ const PROFILE = {
 
 function mediaUrl(elId, mime) {
   var media = {
-    "v01": "assets/films/01.mp4",
+    "v01": "assets/films/01.mp4?v=first-frame-v4",
     "p01": "assets/films/posters/01.jpg",
     "v02": "assets/films/02.mp4",
     "p02": "assets/films/posters/02.jpg",
@@ -2095,7 +2095,18 @@ function loadVideo(video, shouldPlay) {
     video.load();
   }
   if (shouldPlay) {
-    if (video.paused) video.play().catch(function () {});
+    if (video.paused) {
+      video.play().then(function () {
+        delete video.dataset.playBlocked;
+      }).catch(function (error) {
+        if (error && error.name === "NotAllowedError" &&
+            (video.id === "vid-a" || video.id === "vid-b")) {
+          video.dataset.playBlocked = "true";
+          const toggle = document.getElementById("play-toggle");
+          if (toggle) toggle.textContent = "播放";
+        }
+      });
+    }
   } else if (!video.paused) {
     video.pause();
   }
@@ -2117,6 +2128,8 @@ const MEDIA_IMAGE_PATHS = [
 ];
 const prefetchedVideoPaths = new Set();
 let mediaWorkerPromise = null;
+let startupReady = false;
+const deferredVideoPaths = new Set();
 
 function getMediaWorker() {
   if (!("serviceWorker" in navigator)) return Promise.resolve(null);
@@ -2139,6 +2152,10 @@ function cacheImagesInBackground() {
 
 function prefetchVideoInBackground(path) {
   if (!path || prefetchedVideoPaths.has(path)) return;
+  if (!startupReady) {
+    deferredVideoPaths.add(path);
+    return;
+  }
   prefetchedVideoPaths.add(path);
   const send = function () {
     getMediaWorker().then(function (worker) {
@@ -2166,9 +2183,10 @@ function watchVideo(video) {
   }, { rootMargin: "260px 0px" });
   observer.observe(video);
 }
-// Defer off-screen images and decode them asynchronously.
+// Keep non-critical images below the reel low priority.
 document.querySelectorAll("img").forEach(function (img) {
   img.loading = "eager";
+  img.fetchPriority = "low";
   img.decoding = "async";
 });
 var posterMap = {};
@@ -2244,8 +2262,57 @@ function bind(video, film) {
   video.preload = "none";
   video.muted = !wantSound;
 }
+// The first video already has a source in HTML; do not reset its buffer.
+let firstRetryUsed = false;
+let firstStallTimer = 0;
+let lastFirstProgress = performance.now();
+
+function releaseStartupMedia(video) {
+  if (startupReady || video.paused || video.readyState < 2) return;
+  startupReady = true;
+  const currentIndex = FILMS.findIndex(function (film) { return film.id === video.dataset.id; });
+  const nextFilm = FILMS[currentIndex + 1];
+  window.setTimeout(function () {
+    if (nextFilm) prefetchVideoInBackground(nextFilm.src);
+    deferredVideoPaths.forEach(function (path) { prefetchVideoInBackground(path); });
+    deferredVideoPaths.clear();
+  }, 900);
+  window.setTimeout(cacheImagesInBackground, 2400);
+}
+
+function retryFirstVideo() {
+  if (firstRetryUsed || !wantPlay || document.hidden ||
+      vidA.dataset.id !== "01" || (!vidA.error && vidA.readyState >= 2)) return;
+  firstRetryUsed = true;
+  window.clearTimeout(firstStallTimer);
+  vidA.dataset.src = FILMS[0].src + "&retry=1";
+  loadVideo(vidA, true);
+}
+
+function watchFirstStall() {
+  if (firstRetryUsed || vidA.dataset.id !== "01" || !wantPlay) return;
+  window.clearTimeout(firstStallTimer);
+  firstStallTimer = window.setTimeout(function () {
+    if (performance.now() - lastFirstProgress >= 12000) retryFirstVideo();
+    else if (vidA.readyState < 2) watchFirstStall();
+  }, 12000);
+}
+vidA.addEventListener("progress", function () { lastFirstProgress = performance.now(); });
+vidA.addEventListener("error", function () { window.setTimeout(retryFirstVideo, 350); });
+vidA.addEventListener("stalled", watchFirstStall);
+[vidA, vidB].forEach(function (video) {
+  video.addEventListener("playing", function () {
+    delete video.dataset.playBlocked;
+    if (wantPlay) playToggle.textContent = "暂停";
+    if (video === vidA) window.clearTimeout(firstStallTimer);
+    releaseStartupMedia(video);
+  });
+});
 bind(vidA, FILMS[0]);
 loadVideo(vidA, wantPlay);
+watchFirstStall();
+// Register the worker early, but do not start bulk downloads yet.
+getMediaWorker();
 
 function filmTravel() {
   return Math.max(1, portrait.offsetTop - window.innerHeight);
@@ -2277,6 +2344,8 @@ PROFILE.poem.forEach((word, i) => {
   poem.appendChild(span);
   if (PROFILE.poemStills[i]) {
     const img = document.createElement("img");
+    img.fetchPriority = "low";
+    img.decoding = "async";
     img.src = PROFILE.poemStills[i];
     img.alt = "";
     poem.appendChild(img);
@@ -2295,7 +2364,7 @@ CASES.forEach((film) => {
     const finder = document.createElement("article");
     finder.className = film.id === "02" ? "finder finder-red-sail" : "finder";
     finder.innerHTML =
-      '<img class="finder-film" alt="" loading="eager" decoding="async">' +
+      '<img class="finder-film" alt="" loading="eager" fetchpriority="low" decoding="async">' +
       '<div class="finder-layout">' +
         '<p class="finder-word above"></p>' +
         '<div class="finder-gate">' +
@@ -2434,6 +2503,7 @@ function syncBg(index) {
   incoming.onload = null;
   incoming.onerror = null;
   incoming.decoding = "async";
+  incoming.fetchPriority = "low";
   if (incoming.getAttribute("src") === film.poster && incoming.complete && incoming.naturalWidth) {
     reveal();
   } else {
@@ -2523,10 +2593,11 @@ splitFilms.forEach(function (film, index) {
   if (film.src) {
     const poster = document.createElement("img");
     poster.className = "flat-card-poster";
-    poster.src = film.poster;
     poster.alt = "";
     poster.loading = "eager";
+    poster.fetchPriority = "low";
     poster.decoding = "async";
+    poster.src = film.poster;
     card.appendChild(poster);
     const video = document.createElement("video");
     video.muted = true;
@@ -2623,10 +2694,11 @@ splitFilms.forEach(function (film, index) {
   btn.setAttribute("aria-label", film.cap);
   if (film.poster) {
     const img = document.createElement("img");
-    img.src = film.poster;
     img.alt = "";
     img.loading = "eager";
+    img.fetchPriority = "low";
     img.decoding = "async";
+    img.src = film.poster;
     btn.appendChild(img);
   } else {
     btn.classList.add("is-empty");
@@ -2773,15 +2845,19 @@ document.getElementById("mark").addEventListener("click", (e) => {
 });
 
 playToggle.addEventListener("click", () => {
-  wantPlay = !wantPlay;
-  [vidA, vidB].forEach((v) => loadVideo(v, wantPlay));
+  const blocked = activeTimeVideo && activeTimeVideo.dataset.playBlocked === "true";
+  wantPlay = blocked ? true : !wantPlay;
+  if (activeTimeVideo) delete activeTimeVideo.dataset.playBlocked;
+  [vidA, vidB].forEach(function (video) {
+    loadVideo(video, wantPlay && (video === activeTimeVideo || Number(video.style.opacity || 0) > 0.02));
+  });
   playToggle.textContent = wantPlay ? "暂停" : "播放";
 });
 muteToggle.addEventListener("click", () => {
   wantSound = !wantSound;
   [vidA, vidB].forEach((v) => { v.muted = !wantSound; });
   muteToggle.textContent = wantSound ? "静音" : "声音";
-  if (wantSound && wantPlay) vidA.play().catch(() => {});
+  if (wantSound && wantPlay) loadVideo(activeTimeVideo, true);
 });
 
 // Video surface clicks no longer toggle playback; use the explicit playback control.
@@ -2927,7 +3003,7 @@ function finishIntro() {
   introOn = false;
   bind(vidA, FILMS[0]);
   loadVideo(vidA, wantPlay);
-  prefetchVideoInBackground(FILMS[1] && FILMS[1].src);
+  if (!vidA.paused && vidA.readyState >= 2) releaseStartupMedia(vidA);
   pre.classList.add("opening");
   stage.classList.add("grown");
   setTimeout(() => pre.remove(), 460);
@@ -3043,7 +3119,6 @@ function runIntroLine() {
   }
   requestAnimationFrame(frame);
 }
-cacheImagesInBackground();
 runIntroLine();
 
 space.style.height = ((FILMS.length + 1) * 100) + "vh";
